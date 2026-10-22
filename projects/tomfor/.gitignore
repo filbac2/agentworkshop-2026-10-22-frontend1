@@ -1,2 +1,4 @@
 .claude/spore/seen
 .claude/settings.local.json
+node_modules/
+.pw-browsers/

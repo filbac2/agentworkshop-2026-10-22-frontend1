@@ -28,7 +28,7 @@
 <div class="row"><button id="locate"></button></div>
 <div id="status"></div><ul id="results"></ul>
 
-<h2>Errors</h2><div class="row" id="errButtons"></div><div id="errs"></div>
+<h2 id="errTitle"></h2><div class="row" id="errButtons"></div><div id="errs"></div>
 
 <script type="module">
 import { t, detectLang, bandLegend, MODES } from './strings.js';
@@ -60,6 +60,7 @@ function render() {
   $('legend').innerHTML = bandLegend(lang, 30).map((b) => `<div class="band"><span class="sw" style="background:${b.color}"></span>${b.label}</div>`).join('');
   $('modesTitle').textContent = t(lang, 'settings.modes');
   $('modes').textContent = MODES.map((m) => t(lang, 'mode.' + m)).join(' · ');
+  $('errTitle').textContent = t(lang, 'error.heading');
   $('searchTitle').textContent = t(lang, 'search.results');
   $('q').placeholder = t(lang, 'search.placeholder');
   $('locate').textContent = t(lang, 'search.locate');

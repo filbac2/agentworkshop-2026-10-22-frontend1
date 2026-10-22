@@ -73,12 +73,12 @@ function staticChecks(a) {
     ['defaults to new Date()', has(/new Date\(\)|Date\.now\(\)/, a.js)],
   ]);
   add('Max travel 5-120 step 5, default 30', [
-    ['range 5..120 step 5', has(/\b5\s*,\s*120\s*,\s*5\b|min\s*[:=]\s*["']?5["']?[\s\S]{0,60}max\s*[:=]\s*["']?120["']?[\s\S]{0,60}step\s*[:=]\s*["']?5\b|value\s*=\s*\{?\s*["']?5["']?.*120/, all)],
-    ['default 30', has(/maxTravel\w*["']?\s*[:=]\s*["']?30\b/i, all)],
+    ['range 5..120 step 5', has(/\b5\s*,\s*120\s*,\s*5\b|min\s*[:=]\s*["']?5["']?[\s\S]{0,60}max\s*[:=]\s*["']?120["']?[\s\S]{0,60}step\s*[:=]\s*["']?5\b|value\s*=\s*\{?\s*["']?5["']?.*120|=\s*5\s*;\s*\w+\s*<=\s*120\s*;\s*\w+\s*\+=\s*5/, all)],
+    ['default 30', has(/maxTravel\w*["']?\s*[:=]\s*["']?30\b|===\s*30\)\s*\w+\.selected\s*=\s*true/i, all)],
   ]);
   add('Max wait, default 7', [
     ['wait control', has(/maxWait/i, all)],
-    ['default 7', has(/maxWait\w*["']?\s*[:=]\s*["']?7\b/i, all)],
+    ['default 7', has(/maxWait\w*["']?\s*[:=]\s*["']?7\b|id=["']max-wait["'][^>]*value=["']7["']/i, all)],
   ]);
   add('Walking configs (to destination + between stations)', [
     ['walk to destination / egress', has(/egress|toDestination|walkTo|accessMinutes/i, all)],
@@ -87,7 +87,7 @@ function staticChecks(a) {
   add('Modes (bus, metro, tram, train, commuter_rail, boat)', MODES.map((m) => [m, new RegExp(`["']${m}["']`).test(all)]));
   add('Max transfers, default 3', [
     ['transfers control', has(/maxTransfers/, all)],
-    ['default 3', has(/maxTransfers["']?\s*[:=]\s*["']?3\b/, all)],
+    ['default 3', has(/maxTransfers["']?\s*[:=]\s*["']?3\b|id=["']max-transfers["'][^>]*value=["']3["']/, all)],
   ]);
   add('Update button', [
     ['"Update" label', has(/["'>]\s*Update\s*["'<]/, all)],

@@ -3,6 +3,7 @@ include-custom-instructions: true
 name: integration-tester
 description: Tests other teams' real live modules at https://frontend1.torget.bjarby.com and reports faults in #build. Use after release announcements and before delivering.
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch
+model: claude-opus-5.5
 ---
 
 # integration-tester

@@ -40,14 +40,23 @@ about test data. Nothing else changes when the real data arrives.
 ## Tests
 
 ```bash
-node projects/marlin/test.mjs              # 36 tests: algorithm, bands, contract, HTTP surface
+projects/marlin/verify.sh                  # all three suites, stops at the first failure
+projects/marlin/deliver.sh "one line"      # verify, then sync/realign/pr.sh in one step
+```
+
+or run them separately:
+
+```bash
+node projects/marlin/test.mjs              # 37 tests: algorithm, bands, contract, HTTP surface
 node projects/marlin/check-integration.mjs # drift check, run before every PR
 node board/test.mjs                        # the shared board suite, must stay green
 ```
 
 The interesting ones are the invariants: more travel time or more transfers must never
 reach *fewer* stops, arrivals must stay inside the budget, every band must be present
-even when empty, and a 120-minute query must stay well under a second.
+even when empty, a 120-minute query must stay well under a second, and a band's
+polygon must actually cover every stop it claims to reach (the 254-violation bug
+vijay-team found was exactly this guarantee breaking).
 
 ### Why there are two suites
 

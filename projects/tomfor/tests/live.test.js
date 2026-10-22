@@ -97,7 +97,13 @@ async function marlin() {
   checkError('malformed JSON', await call('POST', '/t/marlin/isochrone', '{nope'), 400, 'bad_request');
   checkError('missing origin', await call('POST', '/t/marlin/isochrone', {}), 400, 'bad_request');
   checkError('maxTravelMinutes 500', await call('POST', '/t/marlin/isochrone', bad({ maxTravelMinutes: 500 })), 400, 'bad_request');
-  checkError('maxTravelMinutes 33 (not multiple of 5)', await call('POST', '/t/marlin/isochrone', bad({ maxTravelMinutes: 33 })), 400, 'bad_request');
+  // Contract v1.2 (gen-004): any whole minute 5..120 is valid; <5 and >120 are 400.
+  checkError('maxTravelMinutes 4 (below 5)', await call('POST', '/t/marlin/isochrone', bad({ maxTravelMinutes: 4 })), 400, 'bad_request');
+  checkError('maxTravelMinutes 121 (above 120)', await call('POST', '/t/marlin/isochrone', bad({ maxTravelMinutes: 121 })), 400, 'bad_request');
+  for (const m of [5, 33, 120]) {
+    const r = await call('POST', '/t/marlin/isochrone', bad({ maxTravelMinutes: m }));
+    check(`maxTravelMinutes ${m} accepted`, r.status === 200 && r.json?.meta?.maxTravelMinutes === m, `${r.status} ${short(r.json?.meta ?? r.json ?? r.text)}`);
+  }
   checkError('unknown mode', await call('POST', '/t/marlin/isochrone', bad({ modes: ['hovercraft'] })), 400, 'unknown_mode');
   checkError('no stops near origin (open sea)', await call('POST', '/t/marlin/isochrone', { origin: { lat: 0, lon: 0 } }), 422, 'no_stops_near_origin');
   const nr = await call('POST', '/t/marlin/isochrone', bad({ startTime: '2026-10-22T03:00:00+02:00', maxTravelMinutes: 5, maxTransfers: 0, walking: { accessMinutes: 1 } }));

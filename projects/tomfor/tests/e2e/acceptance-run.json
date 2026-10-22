@@ -1,0 +1,454 @@
+{
+  "at": "2026-10-22T08:57:38.091Z",
+  "base": "https://frontend1.torget.bjarby.com",
+  "app": "/colony/mareri/",
+  "devices": {
+    "phone": {
+      "log": {
+        "consoleErrors": [
+          "Failed to load resource: net::ERR_FAILED",
+          "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+          "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+          "Failed to load resource: the server responded with a status of 422 ()",
+          "Failed to load resource: the server responded with a status of 422 ()"
+        ],
+        "failed": [
+          "https://frontend1.torget.bjarby.com/t/marlin/isochrone net::ERR_FAILED"
+        ],
+        "isoCalls": [
+          200,
+          200,
+          503,
+          500,
+          200,
+          422,
+          422,
+          200
+        ],
+        "loadMs": 899
+      },
+      "errs": {
+        "abort": {
+          "status": "Could not reach the server. Check your connection and try again.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "s503": {
+          "status": "The isochrone engine is not available yet. Try again later.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "s500": {
+          "status": "Something went wrong (HTTP 500).",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "empty": {
+          "status": "The engine returned no areas. Try other settings.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "water": {
+          "status": "No stop within walking distance of the pin. Move the pin or allow a longer walk.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "restrictive": {
+          "status": "No stop within walking distance of the pin. Move the pin or allow a longer walk.",
+          "isError": true,
+          "inView": true,
+          "layers": 0
+        },
+        "restrictiveWalk": {
+          "status": "Done in 0.0 s.",
+          "isError": false,
+          "inView": true,
+          "layers": 2
+        },
+        "noModes": {
+          "status": "Select at least one transport type.",
+          "isError": true,
+          "inView": true,
+          "layers": 2
+        },
+        "badNumber": {
+          "status": "Check the numbers: Max wait (min) is out of range.",
+          "isError": true,
+          "inView": true,
+          "layers": 2
+        }
+      },
+      "extra": {
+        "touchTargetsUnder44": [
+          "div \"leaflet-marker-icon pin \" 36x44",
+          "a \"Zoom in\" 40x40",
+          "a \"Zoom out\" 40x40",
+          "button[button] \"Toggle settings\" 356x30",
+          "button[button] \"EN\" 40x36",
+          "button[button] \"SV\" 40x36",
+          "input[range] \"5\" 356x36",
+          "input[checkbox] \"bus\" 79x38",
+          "input[checkbox] \"metro\" 93x38",
+          "input[checkbox] \"tram\" 87x38",
+          "input[checkbox] \"train\" 87x38",
+          "input[checkbox] \"commuter_rail\" 149x38",
+          "input[checkbox] \"boat\" 84x38"
+        ],
+        "hOverflow": false,
+        "update": {
+          "found": true,
+          "inView": true,
+          "notCovered": true,
+          "top": 650,
+          "bottom": 700,
+          "vh": 844
+        }
+      },
+      "firstBody": {
+        "origin": {
+          "lat": 59.33126316367361,
+          "lon": 18.059463500976566
+        },
+        "startTime": "2026-10-22T08:57:00.000Z",
+        "maxTravelMinutes": 30,
+        "maxWaitMinutes": 7,
+        "maxTransfers": 3,
+        "modes": [
+          "bus",
+          "metro",
+          "tram",
+          "train",
+          "commuter_rail",
+          "boat"
+        ],
+        "walking": {
+          "accessMinutes": 10,
+          "egressMinutes": 10,
+          "transferMinutes": 5
+        },
+        "bandMinutes": 5
+      }
+    },
+    "desktop": {
+      "log": {
+        "consoleErrors": [
+          "Failed to load resource: net::ERR_FAILED",
+          "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+          "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+          "Failed to load resource: the server responded with a status of 422 ()",
+          "Failed to load resource: the server responded with a status of 422 ()"
+        ],
+        "failed": [
+          "https://frontend1.torget.bjarby.com/t/marlin/isochrone net::ERR_FAILED"
+        ],
+        "isoCalls": [
+          200,
+          200,
+          200,
+          200,
+          200,
+          200,
+          503,
+          500,
+          200,
+          422,
+          422,
+          200
+        ],
+        "loadMs": 715
+      },
+      "errs": {
+        "abort": {
+          "status": "Could not reach the server. Check your connection and try again.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "s503": {
+          "status": "The isochrone engine is not available yet. Try again later.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "s500": {
+          "status": "Something went wrong (HTTP 500).",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "empty": {
+          "status": "The engine returned no areas. Try other settings.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "water": {
+          "status": "No stop within walking distance of the pin. Move the pin or allow a longer walk.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "restrictive": {
+          "status": "No stop within walking distance of the pin. Move the pin or allow a longer walk.",
+          "isError": true,
+          "inView": false,
+          "layers": 0
+        },
+        "restrictiveWalk": {
+          "status": "Done in 0.0 s.",
+          "isError": false,
+          "inView": false,
+          "layers": 2
+        },
+        "noModes": {
+          "status": "Select at least one transport type.",
+          "isError": true,
+          "inView": false,
+          "layers": 2
+        },
+        "badNumber": {
+          "status": "Check the numbers: Max wait (min) is out of range.",
+          "isError": true,
+          "inView": false,
+          "layers": 2
+        }
+      },
+      "extra": {
+        "touchTargetsUnder44": [
+          "div \"leaflet-marker-icon pin \" 36x44",
+          "a \"Zoom in\" 40x40",
+          "a \"Zoom out\" 40x40",
+          "button[button] \"EN\" 40x36",
+          "button[button] \"SV\" 40x36",
+          "input[range] \"5\" 326x36",
+          "input[checkbox] \"bus\" 79x38",
+          "input[checkbox] \"metro\" 93x38",
+          "input[checkbox] \"tram\" 87x38",
+          "input[checkbox] \"train\" 87x38",
+          "input[checkbox] \"commuter_rail\" 149x38",
+          "input[checkbox] \"boat\" 84x38"
+        ],
+        "hOverflow": false,
+        "update": {
+          "found": true,
+          "inView": true,
+          "notCovered": true,
+          "top": 721,
+          "bottom": 771,
+          "vh": 800
+        }
+      },
+      "firstBody": {
+        "origin": {
+          "lat": 59.33126316233755,
+          "lon": 18.059463500976566
+        },
+        "startTime": "2026-10-22T08:57:00.000Z",
+        "maxTravelMinutes": 30,
+        "maxWaitMinutes": 7,
+        "maxTransfers": 3,
+        "modes": [
+          "bus",
+          "metro",
+          "tram",
+          "train",
+          "commuter_rail",
+          "boat"
+        ],
+        "walking": {
+          "accessMinutes": 10,
+          "egressMinutes": 10,
+          "transferMinutes": 5
+        },
+        "bandMinutes": 5
+      }
+    }
+  },
+  "results": {
+    "R1 map": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "8/8 loaded tiles from tile.openstreetmap.org; start centre 59.3293,18.0686 z11; touch drag pan moved map; pinch zoom 11->13, zoom-out button ->12"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "24/24 loaded tiles from tile.openstreetmap.org; start centre 59.3293,18.0686 z11; mouse drag pan moved map; wheel zoom 11->13, zoom-out button ->12"
+      }
+    },
+    "R2 origin pin": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "tap sets pin at 59.3313,18.0622 (map panned first, sheet covered target), origin text \"59.33126, 18.06221\"; drag pin moved 59.3313,18.0622 -> 59.34,18.0862, origin text \"59.34002, 18.08624\""
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "click sets pin at 59.3313,18.0595, origin text \"59.33126, 18.05946\"; drag pin moved 59.3313,18.0595 -> 59.34,18.0835, origin text \"59.34002, 18.08350\""
+      }
+    },
+    "R3 start time default now": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "datetime-local value 2026-10-22T10:57, 0.7 min from page load (browser TZ Europe/Stockholm)"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "datetime-local value 2026-10-22T10:57, 1.0 min from page load (browser TZ Europe/Stockholm)"
+      }
+    },
+    "R4 max travel 5-120 step 5 default 30": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "range min 5 max 120 step 5 default 30; 33 snaps to 35, 500 clamps to 120; label \"120 min\" at 120"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "range min 5 max 120 step 5 default 30; 33 snaps to 35, 500 clamps to 120; label \"120 min\" at 120"
+      }
+    },
+    "R5 max wait default 7": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "number input default 7, range 0-60"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "number input default 7, range 0-60"
+      }
+    },
+    "R8 max transfers default 3": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "number input default 3, range 0-8"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "number input default 3, range 0-8"
+      }
+    },
+    "R6 walking settings": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "fields \"Walk to destination (min)\" default 10 and \"Walk between stops (min)\" default 5; request walking {\"accessMinutes\":10,\"egressMinutes\":10,\"transferMinutes\":5}"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "fields \"Walk to destination (min)\" default 10 and \"Walk between stops (min)\" default 5; request walking {\"accessMinutes\":10,\"egressMinutes\":10,\"transferMinutes\":5}"
+      }
+    },
+    "R9 Update recalculates": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "1st Update: 200, 7 band layers; changed to 15 min, no bus, walk 6/3 -> new POST maxTravelMinutes 15, modes metro+tram+train+commuter_rail+boat, walking {\"accessMinutes\":6,\"egressMinutes\":6,\"transferMinutes\":3} -> 200, 3 band layers"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "1st Update: 200, 7 band layers; changed to 15 min, no bus, walk 6/3 -> new POST maxTravelMinutes 15, modes metro+tram+train+commuter_rail+boat, walking {\"accessMinutes\":6,\"egressMinutes\":6,\"transferMinutes\":3} -> 200, 3 band layers"
+      }
+    },
+    "R7 transport type filters": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "6 checkboxes (bus, metro, tram, train, commuter_rail, boat), all on by default; unchecking bus removes it from the request"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "6 checkboxes (bus, metro, tram, train, commuter_rail, boat), all on by default; unchecking bus removes it from the request"
+      }
+    },
+    "R10 5-min bands + legend": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "30 min -> 7 overlay layers (6 bands + walk outline); legend 6 segments, 6 distinct colours, per-band ranges only as title tooltips (0–5 min, 5–10 min, 10–15 min, 15–20 min, 20–25 min, 25–30 min), visible scale 0/15/30; legend in view"
+      },
+      "desktop": {
+        "status": "PARTIAL",
+        "evidence": "30 min -> 7 overlay layers (6 bands + walk outline); legend 6 segments, 6 distinct colours, per-band ranges only as title tooltips (0–5 min, 5–10 min, 10–15 min, 15–20 min, 20–25 min, 25–30 min), visible scale 0/15/30; legend NOT in view without scrolling the panel (top 838 px, viewport 800)"
+      }
+    },
+    "R11 render within a couple of seconds": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "click->overlay at 30 min: 100 ms; status line \"Done in 0.0 s.\""
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "click->overlay at 30 min: 78 / 68 / 81 ms (median 78); 60 min: 111 ms, 7 bands; status line \"Done in 0.0 s.\""
+      }
+    },
+    "R15 English and Swedish": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "SV: button \"Uppdatera\", html lang sv, \"STARTTID\", \"MAXIMAL RESTID\", \"TRAFIKSLAG\", modes 🚌\nBuss/🚇\nTunnelbana/🚊\nSpårvagn/🚆\nTåg/🚉\nPendeltåg/⛴️\nBåt, legend \"RESTID (MIN)\"; back to EN: \"Update\"; SV kept after reload: true"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "SV: button \"Uppdatera\", html lang sv, \"STARTTID\", \"MAXIMAL RESTID\", \"TRAFIKSLAG\", modes 🚌\nBuss/🚇\nTunnelbana/🚊\nSpårvagn/🚆\nTåg/🚉\nPendeltåg/⛴️\nBåt, legend \"RESTID (MIN)\"; back to EN: \"Update\"; SV kept after reload: true"
+      }
+    },
+    "R16a error: API failure": {
+      "phone": {
+        "status": "PARTIAL",
+        "evidence": "/t/marlin blocked (abort): \"Could not reach the server. Check your connection and try again.\" [message NOT in view without scrolling]; 503: \"The isochrone engine is not available yet. Try again later.\" [message NOT in view without scrolling]; 500 JSON without message: \"Something went wrong (HTTP 500).\" [message NOT in view without scrolling]"
+      },
+      "desktop": {
+        "status": "PARTIAL",
+        "evidence": "/t/marlin blocked (abort): \"Could not reach the server. Check your connection and try again.\" [message NOT in view without scrolling]; 503: \"The isochrone engine is not available yet. Try again later.\" [message NOT in view without scrolling]; 500 JSON without message: \"Something went wrong (HTTP 500).\" [message NOT in view without scrolling]"
+      }
+    },
+    "R16b error: no routes": {
+      "phone": {
+        "status": "PARTIAL",
+        "evidence": "pin in open water (real engine): \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\" [message NOT in view without scrolling]; mocked 200 with 0 features: \"The engine returned no areas. Try other settings.\" [message NOT in view without scrolling]"
+      },
+      "desktop": {
+        "status": "PARTIAL",
+        "evidence": "pin in open water (real engine): \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\" [message NOT in view without scrolling]; mocked 200 with 0 features: \"The engine returned no areas. Try other settings.\" [message NOT in view without scrolling]"
+      }
+    },
+    "R16c error: too restrictive": {
+      "phone": {
+        "status": "PARTIAL",
+        "evidence": "5 min, wait 0, transfers 0, walk 0/0, boat only (real engine): \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\"; same with walk 10/5: \"Done in 0.0 s.\" (not styled as error), 2 old band layers still on map (walk-only area drawn, no hint); client checks: all modes off \"Select at least one transport type.\", 2 old band layers still on map, max wait 999 \"Check the numbers: Max wait (min) is out of range.\", 2 old band layers still on map"
+      },
+      "desktop": {
+        "status": "PARTIAL",
+        "evidence": "5 min, wait 0, transfers 0, walk 0/0, boat only (real engine): \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\" [message NOT in view without scrolling]; same with walk 10/5: \"Done in 0.0 s.\" (not styled as error) [message NOT in view without scrolling], 2 old band layers still on map (walk-only area drawn, no hint); client checks: all modes off \"Select at least one transport type.\" [message NOT in view without scrolling], 2 old band layers still on map, max wait 999 \"Check the numbers: Max wait (min) is out of range.\" [message NOT in view without scrolling], 2 old band layers still on map"
+      }
+    },
+    "R12 Trafiklab cached/preprocessed": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "engine meta: source gtfs, dataVersion sl-gtfs-20261103, computedMs 16 ; hosts the browser contacted: frontend1.torget.bjarby.com, unpkg.com, tile.openstreetmap.org"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "engine meta: source gtfs, dataVersion sl-gtfs-20261103, computedMs 16 ; hosts the browser contacted: frontend1.torget.bjarby.com, unpkg.com, tile.openstreetmap.org"
+      }
+    },
+    "R13 responsive / touch": {
+      "phone": {
+        "status": "PARTIAL",
+        "evidence": "horizontal overflow false; own controls under 44 px: div \"leaflet-marker-icon pin \" 36x44; a \"Zoom in\" 40x40; a \"Zoom out\" 40x40; button[button] \"Toggle settings\" 356x30; button[button] \"EN\" 40x36; button[button] \"SV\" 40x36; input[range] \"5\" 356x36; input[checkbox] \"bus\" 79x38; input[checkbox] \"metro\" 93x38; input[checkbox] \"tram\" 87x38; input[checkbox] \"train\" 87x38; input[checkbox] \"commuter_rail\" 149x38; input[checkbox] \"boat\" 84x38; Update in view at end true"
+      },
+      "desktop": {
+        "status": "PARTIAL",
+        "evidence": "horizontal overflow false; own controls under 44 px: div \"leaflet-marker-icon pin \" 36x44; a \"Zoom in\" 40x40; a \"Zoom out\" 40x40; button[button] \"EN\" 40x36; button[button] \"SV\" 40x36; input[range] \"5\" 326x36; input[checkbox] \"bus\" 79x38; input[checkbox] \"metro\" 93x38; input[checkbox] \"tram\" 87x38; input[checkbox] \"train\" 87x38; input[checkbox] \"commuter_rail\" 149x38; input[checkbox] \"boat\" 84x38; Update in view at end true"
+      }
+    },
+    "R17 console / network health": {
+      "phone": {
+        "status": "PASS",
+        "evidence": "5 console errors (0 not caused by our injected failures); /isochrone statuses 200,200,503,500,200,422,422,200"
+      },
+      "desktop": {
+        "status": "PASS",
+        "evidence": "5 console errors (0 not caused by our injected failures); /isochrone statuses 200,200,200,200,200,200,503,500,200,422,422,200"
+      }
+    }
+  }
+}

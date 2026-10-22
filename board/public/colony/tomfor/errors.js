@@ -16,6 +16,8 @@ const CODE_TO_KEY = {
   geo_denied: 'geo_denied',
   geo_unavailable: 'geo_unavailable',
   search_failed: 'search_failed',
+  unavailable: 'unavailable',
+  unreachable: 'unreachable',
 };
 
 // Accepts: {error:{code}}, {error:'code'}, {code}, {status}, {name:'AbortError'|'TimeoutError'},

@@ -1,0 +1,401 @@
+{
+  "at": "2026-10-22T08:42:39.417Z",
+  "browser": "chromium headless (Playwright)",
+  "results": [
+    {
+      "app": "mareri",
+      "device": "phone",
+      "loadMs": 942,
+      "mapCaptured": true,
+      "hOverflow": false,
+      "updateAtLoad": {
+        "found": true,
+        "inView": false,
+        "notCovered": false,
+        "top": 966,
+        "bottom": 1014,
+        "vh": 844
+      },
+      "touchFails": [
+        "img \"leaflet-marker-icon leaf\" 25x41",
+        "a \"Zoom in\" 30x30",
+        "a \"Zoom out\" 30x30",
+        "button[button] \"sheet-toggle\" 358x28"
+      ],
+      "pin": {
+        "ok": true,
+        "marker": [
+          59.3321,
+          18.0629
+        ],
+        "panned": true,
+        "blocked": false
+      },
+      "openedSheet": false,
+      "updateAfterPin": {
+        "found": true,
+        "inView": false,
+        "notCovered": false,
+        "top": 966,
+        "bottom": 1014,
+        "vh": 844
+      },
+      "update": {
+        "status": 200,
+        "respMs": 62,
+        "renderMs": 93,
+        "rendered": true,
+        "layers": 6
+      },
+      "renderMsAll": [
+        93
+      ],
+      "renderMsMedian": 93,
+      "legend": {
+        "visible": true,
+        "text": "Travel time (min) 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langSV": {
+        "ok": true,
+        "updateLabel": "Uppdatera",
+        "htmlLang": "sv"
+      },
+      "legendSV": {
+        "visible": true,
+        "text": "Restid (min) 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langEN": {
+        "ok": true,
+        "updateLabel": "Update",
+        "htmlLang": "en"
+      },
+      "reopenedSheetForError": true,
+      "modesUnchecked": 6,
+      "error": {
+        "requestSent": false,
+        "status": null,
+        "messages": [
+          {
+            "text": "Select at least one transport type.",
+            "inView": true
+          }
+        ],
+        "layersBefore": 6,
+        "layersAfter": 6
+      },
+      "consoleErrors": [],
+      "failed": []
+    },
+    {
+      "app": "mareri",
+      "device": "desktop",
+      "loadMs": 1246,
+      "mapCaptured": true,
+      "hOverflow": false,
+      "updateAtLoad": {
+        "found": true,
+        "inView": true,
+        "notCovered": true,
+        "top": 632,
+        "bottom": 680,
+        "vh": 800
+      },
+      "touchFails": [
+        "img \"leaflet-marker-icon leaf\" 25x41",
+        "a \"Zoom in\" 30x30",
+        "a \"Zoom out\" 30x30"
+      ],
+      "pin": {
+        "ok": true,
+        "marker": [
+          59.3314,
+          18.0595
+        ],
+        "panned": false,
+        "blocked": false
+      },
+      "openedSheet": false,
+      "updateAfterPin": {
+        "found": true,
+        "inView": true,
+        "notCovered": true,
+        "top": 632,
+        "bottom": 680,
+        "vh": 800
+      },
+      "update": {
+        "status": 200,
+        "respMs": 395,
+        "renderMs": 434,
+        "rendered": true,
+        "layers": 6
+      },
+      "renderMsAll": [
+        434,
+        74,
+        68
+      ],
+      "renderMsMedian": 74,
+      "legend": {
+        "visible": true,
+        "text": "Travel time (min) 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langSV": {
+        "ok": true,
+        "updateLabel": "Uppdatera",
+        "htmlLang": "sv"
+      },
+      "legendSV": {
+        "visible": true,
+        "text": "Restid (min) 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langEN": {
+        "ok": true,
+        "updateLabel": "Update",
+        "htmlLang": "en"
+      },
+      "reopenedSheetForError": false,
+      "modesUnchecked": 6,
+      "error": {
+        "requestSent": false,
+        "status": null,
+        "messages": [
+          {
+            "text": "Select at least one transport type.",
+            "inView": true
+          }
+        ],
+        "layersBefore": 6,
+        "layersAfter": 6
+      },
+      "consoleErrors": [],
+      "failed": []
+    },
+    {
+      "app": "filbac",
+      "device": "phone",
+      "loadMs": 713,
+      "mapCaptured": true,
+      "hOverflow": false,
+      "updateAtLoad": {
+        "found": true,
+        "inView": false,
+        "notCovered": false,
+        "top": 1305,
+        "bottom": 1353,
+        "vh": 844
+      },
+      "touchFails": [
+        "input[range] \"Maximum travel time\" 358x32",
+        "input[range] \"Maximum waiting time\" 358x32",
+        "input[range] \"Walk from last stop to d\" 358x32",
+        "input[range] \"Walk between stations\" 358x32",
+        "input[range] \"Maximum transfers\" 358x32",
+        "a \"Zoom in\" 30x30",
+        "a \"Zoom out\" 30x30"
+      ],
+      "pin": {
+        "ok": true,
+        "marker": [
+          59.3314,
+          18.0595
+        ],
+        "panned": false,
+        "blocked": false
+      },
+      "openedSheet": false,
+      "updateAfterPin": {
+        "found": true,
+        "inView": false,
+        "notCovered": false,
+        "top": 1305,
+        "bottom": 1353,
+        "vh": 844
+      },
+      "update": {
+        "status": 200,
+        "respMs": 538,
+        "renderMs": 572,
+        "rendered": true,
+        "layers": 6
+      },
+      "renderMsAll": [
+        572
+      ],
+      "renderMsMedian": 572,
+      "legend": {
+        "visible": true,
+        "text": "Travel time 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langSV": {
+        "ok": true,
+        "updateLabel": "Uppdatera",
+        "htmlLang": "sv"
+      },
+      "legendSV": {
+        "visible": true,
+        "text": "Restid 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langEN": {
+        "ok": true,
+        "updateLabel": "Update",
+        "htmlLang": "en"
+      },
+      "reopenedSheetForError": false,
+      "modesUnchecked": 6,
+      "error": {
+        "requestSent": false,
+        "status": null,
+        "messages": [
+          {
+            "text": "Select at least one transport type.",
+            "inView": true
+          }
+        ],
+        "layersBefore": 6,
+        "layersAfter": 6
+      },
+      "consoleErrors": [],
+      "failed": []
+    },
+    {
+      "app": "filbac",
+      "device": "desktop",
+      "loadMs": 3801,
+      "mapCaptured": true,
+      "hOverflow": false,
+      "updateAtLoad": {
+        "found": true,
+        "inView": false,
+        "notCovered": false,
+        "top": 866,
+        "bottom": 914,
+        "vh": 800
+      },
+      "touchFails": [
+        "input[range] \"Maximum travel time\" 348x32",
+        "input[range] \"Maximum waiting time\" 348x32",
+        "input[range] \"Walk from last stop to d\" 348x32",
+        "input[range] \"Walk between stations\" 348x32",
+        "input[range] \"Maximum transfers\" 348x32",
+        "a \"Zoom in\" 30x30",
+        "a \"Zoom out\" 30x30"
+      ],
+      "pin": {
+        "ok": true,
+        "marker": [
+          59.3314,
+          18.0595
+        ],
+        "panned": false,
+        "blocked": false
+      },
+      "openedSheet": false,
+      "updateAfterPin": {
+        "found": true,
+        "inView": false,
+        "notCovered": false,
+        "top": 866,
+        "bottom": 914,
+        "vh": 800
+      },
+      "update": {
+        "status": 200,
+        "respMs": 746,
+        "renderMs": 774,
+        "rendered": true,
+        "layers": 6
+      },
+      "renderMsAll": [
+        774,
+        287,
+        77
+      ],
+      "renderMsMedian": 287,
+      "legend": {
+        "visible": true,
+        "text": "Travel time 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langSV": {
+        "ok": true,
+        "updateLabel": "Uppdatera",
+        "htmlLang": "sv"
+      },
+      "legendSV": {
+        "visible": true,
+        "text": "Restid 0–5 5–10 10–15 15–20 20–25 25–30"
+      },
+      "langEN": {
+        "ok": true,
+        "updateLabel": "Update",
+        "htmlLang": "en"
+      },
+      "reopenedSheetForError": false,
+      "modesUnchecked": 6,
+      "error": {
+        "requestSent": false,
+        "status": null,
+        "messages": [
+          {
+            "text": "Select at least one transport type.",
+            "inView": true
+          }
+        ],
+        "layersBefore": 6,
+        "layersAfter": 6
+      },
+      "consoleErrors": [],
+      "failed": []
+    },
+    {
+      "app": "mareri",
+      "device": "desktop",
+      "case": "no stops near origin",
+      "pin": {
+        "ok": true,
+        "marker": [
+          59.2701,
+          18.6198
+        ],
+        "panned": true,
+        "blocked": false
+      },
+      "status": 422,
+      "layers": 0,
+      "messages": [
+        {
+          "text": "No stop within walking distance of the pin. Move the pin or allow a longer walk.",
+          "inView": true
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 422 ()"
+      ]
+    },
+    {
+      "app": "filbac",
+      "device": "desktop",
+      "case": "no stops near origin",
+      "pin": {
+        "ok": true,
+        "marker": [
+          59.2701,
+          18.6198
+        ],
+        "panned": true,
+        "blocked": false
+      },
+      "status": 422,
+      "layers": 0,
+      "messages": [
+        {
+          "text": "No stop or station within walking distance. Allow more walking, more transport types or more connections, or move the pin closer to a stop.",
+          "inView": true
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 422 ()"
+      ]
+    }
+  ]
+}

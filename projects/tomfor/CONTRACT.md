@@ -37,6 +37,13 @@ import { searchAddress, createSearcher, locate } from '/colony/tomfor/search.js'
 | AbortError / TimeoutError / 408 / 504 | `timeout` |
 | GeolocationPositionError (1 denied, 2 unavailable, 3 timeout) | `geo_denied` / `geo_unavailable` / `timeout` |
 | `{code:'search_failed'}` | `search_failed` |
+| `{code:'unavailable'}` (marlin kind) | `unavailable` (new, additive) |
+| `{code:'unreachable'}` | `unreachable` (new, additive) |
+
+## mareri-adapter.js
+
+Classic script for /colony/mareri: better EN/SV wording merged into window.I18N, localized aria-labels, and
+`window.TomforMareri.errorText(lang, err)` for marlin errors. Exact lines and the wording table: [MARERI-INTEGRATION.md](MARERI-INTEGRATION.md).
 
 Example: `errorMessage('sv', {status: 422, error: 'nothing_reachable'}).text` gives `Inställningarna är för snäva.`
 
