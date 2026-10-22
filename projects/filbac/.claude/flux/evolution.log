@@ -38,3 +38,4 @@
 2026-10-22 11:28 SELECT: w7d3-alpha wins (fitness 60 vs 55), gamma to the graveyard
 2026-10-22 11:28 SELECT: k4m1-alpha wins (fitness 78 vs 35), beta to the graveyard
 2026-10-22 11:28 SELECT: p9q2-alpha wins (fitness 62 vs 45), beta gamma to the graveyard
+2026-10-22 11:28 CROSS: p9q2-alpha x w7d3-gamma -> p9q2-delta (gateway: mareri engine first, marlin fallback, walk-only wrap; baseline 60)
