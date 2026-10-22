@@ -37,7 +37,27 @@
       bandsSummary: 'Within {min} min: {count} stations',
       departuresTitle: 'Next departures',
       departuresNone: 'No departures in the next hour from this stop.',
-      departuresTowards: 'Towards {dest}'
+      departuresTowards: 'Towards {dest}',
+      // New features (#build 371-376): meeting point, reliable commute, service hours, feed validity,
+      // arrive-by and return trip. Additive, unused until mareri renders them.
+      meetingTitle: 'Meeting point',
+      meetingHint: 'Place two pins to find a fair place to meet.',
+      meetingPoint: 'Meet at {stop}: {a} min for you, {b} min for the other person',
+      meetingNone: 'No common meeting point within {max} min. Try a longer travel time or move a pin.',
+      commuteReliable: 'Reliable commute only',
+      commuteNote: 'Shows only places you reach in time whatever minute you leave, not just with lucky timing.',
+      commuteLucky: 'Reachable only with lucky timing',
+      serviceFirst: 'First departure {time}',
+      serviceLast: 'Last departure {time}',
+      serviceEnded: 'No more departures today from this stop.',
+      'warn.feedOutOfRange': 'Timetable data covers {from} to {to}; results for this date may be wrong. Choose a date between {from} and {to}.',
+      arriveByToggle: 'Arrive by',
+      arriveByLabel: 'Arrive by {time}',
+      arriveByNote: 'The map shows how long it takes to get to the pin by {time}.',
+      'err.arriveByUnavailable': 'Arrive by is not available yet.',
+      returnTripToggle: 'Check the trip back',
+      returnTripLabel: 'Places you can reach and get back from within {max} min',
+      returnTripNone: 'No place found that you can reach and get back from within {max} min.'
     },
     sv: {
       title: 'Restidskarta för Stockholm',
@@ -65,7 +85,25 @@
       bandsSummary: 'Inom {min} min: {count} stationer',
       departuresTitle: 'Nästa avgångar',
       departuresNone: 'Inga avgångar inom den närmaste timmen från den här hållplatsen.',
-      departuresTowards: 'Mot {dest}'
+      departuresTowards: 'Mot {dest}',
+      meetingTitle: 'Mötesplats',
+      meetingHint: 'Placera två nålar för att hitta en rättvis plats att mötas på.',
+      meetingPoint: 'Mötas vid {stop}: {a} min för dig, {b} min för den andra',
+      meetingNone: 'Ingen gemensam mötesplats inom {max} min. Prova en längre restid eller flytta en nål.',
+      commuteReliable: 'Bara pålitlig pendling',
+      commuteNote: 'Visar bara platser du hinner till oavsett vilken minut du åker, inte bara med tur.',
+      commuteLucky: 'Nås bara om tiderna passar',
+      serviceFirst: 'Första avgång {time}',
+      serviceLast: 'Sista avgång {time}',
+      serviceEnded: 'Inga fler avgångar i dag från den här hållplatsen.',
+      'warn.feedOutOfRange': 'Tidtabellsdatan gäller {from} till {to}; resultaten för det här datumet kan vara fel. Välj ett datum mellan {from} och {to}.',
+      arriveByToggle: 'Framme senast',
+      arriveByLabel: 'Framme senast {time}',
+      arriveByNote: 'Kartan visar hur lång tid det tar att komma till nålen senast {time}.',
+      'err.arriveByUnavailable': 'Framme senast finns inte än.',
+      returnTripToggle: 'Kontrollera resan tillbaka',
+      returnTripLabel: 'Platser du kan resa till och tillbaka från inom {max} min',
+      returnTripNone: 'Ingen plats hittades som du kan resa till och tillbaka från inom {max} min.'
     }
   };
 

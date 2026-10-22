@@ -4,7 +4,7 @@ type: capability
 domain: accessibility
 tools: Read, Edit, Bash
 model: sonnet
-energy: 50
+energy: 60
 spawned: 2026-10-22
 can-merge-with: [tile-ui]
 ---

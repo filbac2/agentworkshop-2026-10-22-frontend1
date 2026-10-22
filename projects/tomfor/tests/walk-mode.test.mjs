@@ -14,6 +14,8 @@ const src = fs.readFileSync(new URL('../../../board/public/colony/tomfor/walk-mo
 // live-capture.json: gateway with walk mode (PR 30 live). capture-prewalk-gateway.json: gateway before PR 30 (modes [] -> 400).
 const cap = JSON.parse(fs.readFileSync(new URL('fixtures/walk/live-capture.json', here), 'utf8'));
 const prewalk = JSON.parse(fs.readFileSync(new URL('fixtures/walk/capture-prewalk-gateway.json', here), 'utf8'));
+// capture-pre-pr36-gateway.json: gateway before filbac PR 36 (31-min estimate band smaller than the 30-min street band).
+const prePr36 = JSON.parse(fs.readFileSync(new URL('fixtures/walk/capture-pre-pr36-gateway.json', here), 'utf8'));
 const { CASES } = { CASES: [
   { name: 'center-30x5', lat: 59.3326, lon: 18.0649, maxMinutes: 30, stepMinutes: 5 },
   { name: 'center-45x15', lat: 59.3326, lon: 18.0649, maxMinutes: 45, stepMinutes: 15 },
@@ -170,11 +172,20 @@ if (!LIVE) {
     });
   }
 
-  await test('captured gateway seam-31 raw: known fault, 30-min street band pokes out of the 31-min band', async () => {
+  await test('captured gateway seam-31 raw (after filbac PR 36): nested, seam repair is a no-op', async () => {
     const raw = cap.gateway['seam-31'].body;
+    assert.equal(outsideShare(raw.features[1].geometry, raw.features[0].geometry), 0);
+    const fc = await W.fetchWalkBands(CASES.find((x) => x.name === 'seam-31'), { fetch: fakeFetch({ gateway: 'capture' }) });
+    assert(!fc.meta.seamRepaired, 'repair should not trigger on the fixed gateway');
+  });
+
+  await test('pre-PR 36 gateway seam-31: safety net still repairs the old fault', async () => {
+    const raw = prePr36.gateway['seam-31'].body;
     const share = outsideShare(raw.features[1].geometry, raw.features[0].geometry);
-    assert(share > 0.02, 'fault fixed upstream? share ' + share);
-    findings.push('gateway seam (fixture): 31-min estimate band leaves ' + (share * 100).toFixed(0) + '% of the 30-min street band outside');
+    assert(share > 0.02, 'old fixture should show the fault, share ' + share);
+    const fc = await W.fetchWalkBands(CASES.find((x) => x.name === 'seam-31'), { fetch: fakeFetch({ gateway: raw }) });
+    assert.equal(fc.meta.seamRepaired, true);
+    assert.equal(outsideShare(fc.features[1].geometry, fc.features[0].geometry), 0);
   });
 
   await test('gateway down -> mareri fallback', async () => {

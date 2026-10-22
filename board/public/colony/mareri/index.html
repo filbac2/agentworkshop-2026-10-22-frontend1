@@ -51,6 +51,10 @@
       <span class="label" data-i18n="startTime">Start time</span>
       <input type="datetime-local" id="start-time" required>
     </label>
+    <label class="check">
+      <input type="checkbox" id="arrive-by">
+      <span data-i18n="arriveBy">Arrive by this time (where could I leave from?)</span>
+    </label>
 
     <div class="field">
       <div class="label-row">
@@ -89,16 +93,24 @@
       <p class="hint" data-i18n="walkOnlyHint">Turn all off to see walking only.</p>
     </fieldset>
 
-    <button id="update" class="primary" type="submit">
-      <span class="spinner" aria-hidden="true"></span>
-      <span data-i18n="update">Update</span>
-    </button>
+    <div class="actions">
+      <button id="update" class="primary" type="submit">
+        <span class="spinner" aria-hidden="true"></span>
+        <span data-i18n="update">Update</span>
+      </button>
+      <button id="reset-map" class="secondary" type="button" data-i18n="reset">Reset</button>
+    </div>
   </form>
 
   <div id="status" role="status" aria-live="polite"></div>
   <div id="legend" class="legend" hidden></div>
   <p id="journey-hint" class="journey-hint" hidden></p>
   <div id="walk-note" class="walk-note" hidden><span class="walk-swatch" aria-hidden="true"></span><span id="walk-text"></span></div>
+</aside>
+
+<aside id="journey-panel" class="panel journey-panel" aria-live="polite" hidden>
+  <button id="journey-close" class="journey-close" type="button" data-i18n-aria="close" aria-label="Close">&times;</button>
+  <div id="journey-body"></div>
 </aside>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

@@ -1,0 +1,67 @@
+{
+  "runner": "pr26",
+  "base": "https://frontend1.torget.bjarby.com",
+  "app": "/colony/mareri/",
+  "finishedAt": "2026-10-22T09:52:02.163Z",
+  "live": false,
+  "journeyStatus": 404,
+  "pass": 0,
+  "fail": 0,
+  "skip": 9,
+  "results": [
+    {
+      "id": "meta-colony-group-app",
+      "viewport": "desktop",
+      "status": "SKIP",
+      "evidence": "meta[name=colony] content=null"
+    },
+    {
+      "id": "slider-aria-valuetext",
+      "viewport": "desktop",
+      "status": "SKIP",
+      "evidence": "initial null, after 45 null"
+    },
+    {
+      "id": "focus-ring-on-tab",
+      "viewport": "desktop",
+      "status": "SKIP",
+      "evidence": "16/29 tab stops without outline/box-shadow: input#start-time, input#max-wait, input#max-transfers, input#walk-dest, input#walk-transfer, input[checkbox]"
+    },
+    {
+      "id": "error-role-alert",
+      "viewport": "desktop",
+      "status": "SKIP",
+      "evidence": "no visible role=alert; #status {\"role\":\"status\",\"live\":\"polite\",\"cls\":\"error\",\"text\":\"Could not reach the server. Check your connection and try again.\"}"
+    },
+    {
+      "id": "sv-copy-berakningstjansten",
+      "viewport": "desktop",
+      "status": "SKIP",
+      "evidence": "Isokronmotorn present: true; Beräkningstjänsten present: false; unavailable text \"Isokronmotorn är inte tillgänglig ännu. Försök igen senare.\""
+    },
+    {
+      "id": "touch-targets-44",
+      "viewport": "phone",
+      "status": "SKIP",
+      "evidence": "13 below 44px: div \"leaflet-marker-icon pin \" 36x44, a \"Zoom in\" 40x40, a \"Zoom out\" 40x40, button[button] \"Toggle settings\" 356x30, button[button] \"EN\" 40x36, button[button] \"SV\" 40x36, input[range] \"30\" 356x36, input[checkbox] \"bus\" 79x38"
+    },
+    {
+      "id": "dvh-units",
+      "viewport": "phone",
+      "status": "SKIP",
+      "evidence": "no dvh in same-origin stylesheets"
+    },
+    {
+      "id": "share-link",
+      "viewport": "desktop",
+      "status": "SKIP",
+      "evidence": "no location.hash after Update (pin true, lang true)"
+    },
+    {
+      "id": "share-link-lang",
+      "viewport": "desktop",
+      "status": "SKIP",
+      "evidence": "no hash"
+    }
+  ]
+}

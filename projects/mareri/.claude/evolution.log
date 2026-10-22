@@ -22,3 +22,5 @@
 2026-10-22 11:27 MUTATE: tile-qa, energy 55 -> 65 (journey regression checks now cover hover cancellation, touch long-press and exact walking limits; existing journey-trace covers the spawn request)
 2026-10-22 11:29 MERGE: map-overlay + settings-i18n -> tile-ui (changed together on every UI task, incl. hover journey; energy 80)
 2026-10-22 11:38 SPAWN: a11y-copy (open a11y and Swedish copy fixes from vijay-team review plus group-app meta tag had no owner)
+2026-10-22 11:54 EVOLVE: energies tile-ui 90, journey-trace 70, a11y-copy 60, engine-client 55, street-engine 65, tile-qa 50 (share link, walk-only, summary, shape rides touched UI/trace/a11y; engine idle; browser QA skipped for the last 4 changes)
+2026-10-22 11:54 MUTATE: tile-qa (must run a headless-browser check for every UI change before delivery; skipped for share link, walk-only, summary and shape rides)

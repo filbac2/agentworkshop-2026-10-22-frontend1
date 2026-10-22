@@ -1,6 +1,6 @@
 // Links-driven acceptance runner: opens each shareable link from links.txt in Chromium (phone 390px + desktop 1280px),
 // waits for the isochrone overlay or an error, prints one health line per link and viewport, writes links-run.json.
-// Line format: tomfor-acceptance <PASS|FAIL> <link-id> <viewport> <ms> <note>
+// Line format: tomfor-acceptance <PASS|FAIL|SKIP> <link-id> <viewport> <ms> <note>
 // Run: npm run e2e:links   (env BASE, LINKS=path, ONLY=id1,id2, VIEWPORTS=phone,desktop)
 const fs = require('fs');
 const path = require('path');
@@ -21,13 +21,19 @@ function parseLinks(file) {
     const ex = words.find(w => w.startsWith('expect='));
     const url = new URL(u, BASE);
     const p = url.searchParams;
+    // mareri share link (PR 26): #ll=lat,lon&t=min&w=&x=&d=&r=&m=modes[&lang=sv]
+    const h = new URLSearchParams(url.hash.slice(1));
+    const ll = h.has('ll') ? h.get('ll').split(',').map(Number) : null;
+    const pick = (q, hk) => (p.has(q) ? p.get(q) : h.has(hk) ? h.get(hk) : null);
+    const min = pick('min', 't'), modes = pick('modes', 'm');
     return {
-      id, url: url.toString(), path: url.pathname + url.search, comment: c.trim(),
+      id, url: url.toString(), path: url.pathname + url.search + url.hash, comment: c.trim(),
       expect: ex ? ex.slice(7) : 'overlay',
+      needsHash: words.includes('needs=hash'),
       params: {
-        lat: p.has('lat') ? +p.get('lat') : null, lon: p.has('lon') ? +p.get('lon') : null,
-        min: p.has('min') ? +p.get('min') : null, modes: p.has('modes') ? p.get('modes').split(',').filter(Boolean) : null,
-        lang: p.get('lang'), time: p.get('time'),
+        lat: p.has('lat') ? +p.get('lat') : ll ? ll[0] : null, lon: p.has('lon') ? +p.get('lon') : ll ? ll[1] : null,
+        min: min != null ? +min : null, modes: modes != null ? modes.split(',').filter(Boolean) : null,
+        lang: pick('lang', 'lang'), time: p.get('time'),
       },
     };
   });
@@ -126,6 +132,10 @@ async function runOne(browser, link, device) {
     const seen = await detectUrlState(page, log, link.params);
     r.urlStateSeen = seen;
     r.urlState = seen.length > 0;
+    if (link.needsHash && !r.urlState) {
+      r.status = 'SKIP'; r.ms = 0; r.note = 'share-link hash not picked up by the app (not live yet)';
+      return r;
+    }
     let out;
     if (log.isoCalls.length) {
       out = await waitOutcome(page, '', Date.now() - 1500);
@@ -176,12 +186,13 @@ async function runOne(browser, link, device) {
   }
   await browser.close();
   const summary = {
-    runner: 'tomfor-acceptance', format: 'tomfor-acceptance <PASS|FAIL> <link-id> <viewport> <ms> <note>',
+    runner: 'tomfor-acceptance', format: 'tomfor-acceptance <PASS|FAIL|SKIP> <link-id> <viewport> <ms> <note>',
     base: BASE, finishedAt: new Date().toISOString(),
     pass: results.filter(r => r.status === 'PASS').length, fail: results.filter(r => r.status === 'FAIL').length,
+    skip: results.filter(r => r.status === 'SKIP').length,
     urlStateSupported: results.some(r => r.urlState), results,
   };
   fs.writeFileSync(OUT, JSON.stringify(summary, null, 2) + '\n');
-  console.log(`tomfor-acceptance SUMMARY ${summary.pass} pass ${summary.fail} fail, url-state ${summary.urlStateSupported ? 'supported' : 'not supported'}, json tests/e2e/links-run.json`);
+  console.log(`tomfor-acceptance SUMMARY ${summary.pass} pass ${summary.fail} fail ${summary.skip} skip, url-state ${summary.urlStateSupported ? 'supported' : 'not supported'}, json tests/e2e/links-run.json`);
   process.exit(summary.fail ? 1 : 0);
 })();

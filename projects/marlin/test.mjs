@@ -506,6 +506,65 @@ test('forced discs carry a frozen checkR so independent per-band decimation stay
   assert.ok(keptO && keptO.r === 1000, 'the surviving neighbour must keep its own full radius');
 });
 
+/* ---- arrive-by (reverse search) ----------------------------------------- */
+
+test('arrive-by finds a comparable catchment to the forward search', () => {
+  // Not the same stops (the reverse scan depends on which trips happen to
+  // arrive by the deadline, not which ones depart after a start time) but a
+  // walk-only trip is reachable both ways, and both directions should find a
+  // meaningful, non-trivial catchment for the same budget.
+  const fwd = engine.search(net, q({ maxTravelMinutes: 30 }));
+  const rev = engine.searchReverse(net, Object.assign({}, q({ maxTravelMinutes: 30 }),
+    { deadlineSec: 8 * 3600 + 30 * 60 }));
+  assert.ok(rev.originStops >= 1, 'egress from the pin should find stops');
+  assert.ok(rev.reached >= 15, 'expected a decent catchment, got ' + rev.reached);
+  assert.ok(Math.abs(rev.reached - fwd.reached) < fwd.reached,
+    'reverse catchment should be the same order of magnitude as forward');
+});
+
+test('arrive-by latest-departure times stay inside the budget and before the deadline', () => {
+  const deadlineSec = 9 * 3600;
+  const query = Object.assign({}, q({ maxTravelMinutes: 45 }), { deadlineSec });
+  const r = engine.searchReverse(net, query);
+  for (let i = 0; i < r.arrival.length; i++) {
+    if (r.arrival[i] === -1) continue;
+    assert.ok(r.arrival[i] <= deadlineSec, 'latest time must not be after the deadline');
+    assert.ok(deadlineSec - r.arrival[i] <= query.maxTravelSeconds, 'must stay inside the budget');
+  }
+});
+
+test('a tighter arrive-by travel budget never reaches more stops', () => {
+  let prevReached = Infinity;
+  for (const minutes of [60, 45, 30, 15]) {
+    const r = engine.searchReverse(net, Object.assign({}, q({ maxTravelMinutes: minutes }),
+      { deadlineSec: 9 * 3600 }));
+    assert.ok(r.reached <= prevReached, minutes + ' min reached ' + r.reached + ' > ' + prevReached);
+    prevReached = r.reached;
+  }
+});
+
+test('the API accepts arriveBy and echoes a deadline, not a startTime', () => {
+  const r = computeIsochrone(parseRequest(JSON.stringify({
+    origin: ORIGIN, arriveBy: true, startTime: '09:00', maxTravelMinutes: 30,
+  })));
+  assert.equal(r.meta.arriveBy, true);
+  assert.ok(r.meta.deadline, 'deadline must be echoed back');
+  assert.equal(r.meta.startTime, undefined, 'startTime must not be echoed for an arrive-by request');
+  assert.ok(r.meta.stopsReached > 0);
+  assert.ok(r.features.length > 0);
+});
+
+test('arrive-by bands are still cumulative, outermost first, and cover the budget', () => {
+  const r = computeIsochrone(parseRequest(JSON.stringify({
+    origin: ORIGIN, arriveBy: true, startTime: '08:45', maxTravelMinutes: 30, bandMinutes: 10,
+  })));
+  const mins = r.features.map((f) => f.properties.toMinutes);
+  for (let i = 1; i < mins.length; i++) {
+    assert.ok(mins[i] <= mins[i - 1], 'bands must come back outermost first, like the forward contract');
+  }
+  assert.equal(mins[0], 30);
+});
+
 let failed = 0;
 for (const [name, fn] of tests) {
   try {

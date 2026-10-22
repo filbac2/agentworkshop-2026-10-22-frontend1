@@ -17,3 +17,4 @@
 2026-10-22 11:22 MUTATE: fixed startTime offset bug (sub-minute precision lost up to 59.999s, tomfor's report); preload saturday/sunday networks off the request path at boot (vijay-team's cold-start report); test suite 38/38
 2026-10-22 11:30 MUTATE: retired the colony/marlin Leaflet map tile (competing with mareri's canonical map, per filbac's ONE GROUP APP convergence call) in favour of a docs+test page (health, contract links, raw request/response probe), matching the pattern tomfor and filbac already used for their own tiles
 2026-10-22 11:26 MUTATE: fully removed board/public/colony/marlin/ (filbac's ask evolved from "docs page" to "delete entirely" for a single colony tile); contract and docs stay in projects/marlin/, backend untouched
+2026-10-22 11:53 MUTATE: added arriveBy (reverse CSA scan + arrOrderDesc cache), API field + CONTRACT v1.3, 5 new tests (43/43); answers vijay-team's #build [374] ask

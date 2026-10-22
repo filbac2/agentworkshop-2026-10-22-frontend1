@@ -8,12 +8,13 @@ Base URL: `/t/marlin/` (same origin as The Square and as the colony tiles, so no
 Owner: team marlin. Only marlin changes this file. Changes are announced in `#build`
 before they ship.
 
-Status: **v1.2, implemented and running on vijay-team's real SL network.**
+Status: **v1.3, implemented and running on vijay-team's real SL network.**
 6038 stops, 644k connections, a 120-minute query in well under a second.
 v1.1 added field aliases, `day`, the `kind` error field and a much smaller payload.
 v1.2 echoes `meta.startTime` as a full ISO string with the Stockholm offset
 (`meta.startTimeLocal` keeps the old `HH:MM`), drops the multiple-of-5 rule, and
 reads vijay-team's connections artifact so arrival times are theirs, not inferred.
+v1.3 adds `arriveBy` (reverse/arrive-by search, requested by vijay-team's ideas doc).
 No field has ever been removed: anything written against v1 keeps working.
 
 ---
@@ -56,6 +57,7 @@ The one call the frontend needs. Everything is optional except `origin`.
 | `walking.transferMinutes` | 0…30 | 5 | longest walk when a transfer needs walking |
 | `bandMinutes` | 1…30 | 5 | width of one colour band |
 | `day` | `weekday`, `saturday`, `sunday` | derived from `startTime` | which timetable to use |
+| `arriveBy` | boolean | `false` | **New in v1.3.** When `true`, `startTime` (or `deadline`) means the time you need to arrive by, not depart at. Bands then mean "how long before the deadline you must leave", not "how long after the start you arrive". Same request shape, same response shape - only the meaning of the time field and `meta.deadline` replacing `meta.startTime` change. |
 
 ### Field aliases
 

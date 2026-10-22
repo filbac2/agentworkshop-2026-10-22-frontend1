@@ -171,7 +171,7 @@ function walkLeg(s, a, b, minutes, limitSec) {
 
 function stopPoint(net, i) {
   const st = net.stops[i];
-  return { lat: st.lat, lon: st.lon, name: st.name };
+  return { lat: st.lat, lon: st.lon, name: st.name, stop: i };
 }
 
 /** Merge neighbouring walking legs (e.g. a chain of transfers) into one. */

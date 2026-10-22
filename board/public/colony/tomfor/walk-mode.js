@@ -168,6 +168,8 @@
 
   // Straight-line bands beyond 30 min can be smaller than the 30-min street band (streets reach farther than
   // speed/1.3). Grow each estimate band so it reaches at least the last street band, scaled by minutes, so bands nest.
+  // Since filbac PR 36 the gateway's estimate bands already reach past the 30-min street band, so on gateway answers
+  // this is a no-op safety net (verified live 2026-10-22). It still does real work on our own mareri fallback bands.
   function repairSeam(fc) {
     var meta = fc.meta || {};
     var o = meta.origin || {};

@@ -110,11 +110,25 @@
   }
   pin.on('drag', showOrigin);
   var suppressClickUntil = 0;
+  // The origin is chosen once; Reset unlocks it. A double click only zooms.
+  var originLocked = false;
+  var clickTimer = null;
+  function lockOrigin(on) {
+    originLocked = on;
+    if (on) pin.dragging.disable(); else pin.dragging.enable();
+  }
+  pin.on('dragend', function () { lockOrigin(true); });
+  map.on('dblclick', function () { clearTimeout(clickTimer); clickTimer = null; });
   map.on('click', function (e) {
-    if (Date.now() < suppressClickUntil) return;
-    pin.setLatLng(e.latlng);
-    showOrigin();
-    setJourneyBody(null);
+    if (Date.now() < suppressClickUntil || originLocked) return;
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(function () {
+      clickTimer = null;
+      pin.setLatLng(e.latlng);
+      showOrigin();
+      setJourneyBody(null);
+      lockOrigin(true);
+    }, 260);
   });
   showOrigin();
 
@@ -168,6 +182,9 @@
     if (typeof checkFeed === 'function') checkFeed();
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
     });
     document.querySelectorAll('.lang button').forEach(function (b) {
       b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang));
@@ -335,7 +352,8 @@
         egressMinutes: intVal('walk-dest'),
         transferMinutes: intVal('walk-transfer')
       },
-      bandMinutes: 5
+      bandMinutes: 5,
+      arriveBy: $('arrive-by').checked
     };
   }
 
@@ -382,6 +400,21 @@
     return e.isNetwork || e.status === 404 || e.status === 405 || e.status >= 500;
   }
 
+  async function checkWalkable(body, ctrl) {
+    var r;
+    try {
+      r = await fetch('/t/mareri/walkable?lat=' + body.origin.lat + '&lon=' + body.origin.lon, { signal: ctrl.signal });
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      return;
+    }
+    if (r.status !== 422) return;
+    var d = await r.json().catch(function () { return {}; });
+    var err = new Error((lang === 'sv' ? d.message_sv : d.message) || d.message || 'not walkable');
+    err.status = 422;
+    throw err;
+  }
+
   async function callEngine(body) {
     if (params.get('stub') === '1' && window.StubEngine) return window.StubEngine(body);
     if (inflight) inflight.abort();
@@ -390,7 +423,9 @@
     var timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
     try {
       try {
+        if (body.arriveBy || !body.modes.length) await checkWalkable(body, ctrl); // engines that do not know the streets
         if (!body.modes.length) return await postEngine(WALK_ENGINE_URL, body, ctrl);
+        if (body.arriveBy) return await postEngine(FALLBACK_ENGINE_URL, body, ctrl); // reverse search lives in marlin
         return await postEngine(ENGINE_URL, body, ctrl);
       } catch (e) {
         if (e.name === 'AbortError' || !streetEngineDown(e)) throw e;
@@ -425,7 +460,8 @@
     return MODE_COLORS[leg.mode] || '#334155';
   }
 
-  function hideJourney() {
+  function hideJourney(keepCard) {
+    if (keepCard !== true) $('journey-panel').hidden = true;
     journeyToken++;
     clearTimeout(journeyTimer);
     if (journeyCtrl) { journeyCtrl.abort(); journeyCtrl = null; }
@@ -440,6 +476,32 @@
     return el;
   }
 
+  // Later departures of the same line from the boarding stop (vijay-team /departures; stop indices match marlin's).
+  var depCache = {};
+  function stockholmDayType() {
+    var start = journeyBody && journeyBody.startTime ? new Date(journeyBody.startTime) : new Date();
+    var wd = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Stockholm', weekday: 'short' }).format(start);
+    return wd === 'Sat' ? 'saturday' : wd === 'Sun' ? 'sunday' : 'weekday';
+  }
+  function loadNextDepartures(leg, el) {
+    if (typeof leg.from.stop !== 'number' || !leg.line) return;
+    var url = '/t/vijay-team/departures?stop=' + leg.from.stop + '&time=' + leg.depart +
+      '&day=' + stockholmDayType() + '&limit=50&modes=' + encodeURIComponent(leg.mode);
+    if (!depCache[url]) {
+      depCache[url] = fetch(url).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+    depCache[url].then(function (data) {
+      if (!data || !data.departures) return;
+      var own = data.departures.filter(function (x) { return x.route === leg.line && x.dep === leg.depart; })[0];
+      if (!own) return;
+      var times = data.departures.filter(function (x) { return x.route === leg.line && x.toIndex === own.toIndex && x.dep > leg.depart; })
+        .slice(0, 3).map(function (x) { return x.dep; });
+      if (!times.length) return;
+      el.textContent = t('jNext', { times: times.join(', ') });
+      el.hidden = false;
+    });
+  }
+
   function journeyContent(d) {
     var box = journeyEl('div', 'j-card');
     var head = journeyEl('div', 'j-head');
@@ -447,6 +509,7 @@
     var changes = d.transfers === 0 ? t('jDirect') : d.transfers === 1 ? t('jChange1') : t('jChanges', { n: d.transfers });
     head.appendChild(journeyEl('span', 'j-sub', t('jArrive', { t: d.arriveTime }) + ' · ' + changes));
     box.appendChild(head);
+    var firstRide = false;
     d.legs.forEach(function (leg, i) {
       var row = journeyEl('div', 'j-row ' + leg.type);
       if (leg.type === 'walk') {
@@ -467,6 +530,13 @@
         var meta = leg.depart + '\u2013' + leg.arrive + ' \u00B7 ' + t(leg.stops === 1 ? 'jStop1' : 'jStops', { n: leg.stops });
         if (leg.waitMinutes > 0) meta += ' \u00B7 ' + t('jWait', { n: leg.waitMinutes });
         rt.appendChild(journeyEl('div', 'j-meta', meta));
+        if (!firstRide) {
+          firstRide = true;
+          var next = journeyEl('div', 'j-meta j-next', '');
+          next.hidden = true;
+          rt.appendChild(next);
+          loadNextDepartures(leg, next);
+        }
         row.appendChild(rt);
       }
       box.appendChild(row);
@@ -477,24 +547,18 @@
     return box;
   }
 
-  function journeyTooltip(content, latlng) {
-    var at = map.latLngToContainerPoint(latlng);
-    var tip = L.tooltip({
-      permanent: true, direction: at.x < map.getSize().x / 2 ? 'right' : 'left',
-      offset: [12, 0], opacity: 1, className: 'journey-tip', interactive: false
-    }).setLatLng(latlng).setContent(content).addTo(journeyLayer);
-    var rect = tip.getElement().getBoundingClientRect();
-    var bounds = map.getContainer().getBoundingClientRect();
-    var bottom = Math.min(bounds.bottom, window.innerHeight - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-h') || 0));
-    var dx = Math.max(bounds.left + 8 - rect.left, Math.min(0, bounds.right - 8 - rect.right));
-    var dy = Math.max(bounds.top + 8 - rect.top, Math.min(0, bottom - 8 - rect.bottom));
-    tip.setLatLng(map.containerPointToLatLng([at.x + dx, at.y + dy]));
+  // The card lives in a fixed panel on the right; the route itself is drawn on the map.
+  function journeyTooltip(content) {
+    var body = $('journey-body');
+    body.textContent = '';
+    body.appendChild(content);
+    $('journey-panel').hidden = false;
   }
 
   function journeyNotice(latlng, key) {
     journeyLayer.clearLayers();
     journeyShown = null;
-    journeyTooltip(journeyEl('div', 'j-card', t(key)), latlng);
+    journeyTooltip(journeyEl('div', 'j-card', t(key)));
   }
 
   // Ride legs are drawn along the real line geometry (vijay-team /shape) when it can be matched to the stops.
@@ -572,7 +636,7 @@
       pane: 'journey', interactive: false, radius: 7, weight: 3, color: '#ffffff', fillColor: '#0f172a', fillOpacity: 1
     });
     end.addTo(journeyLayer);
-    journeyTooltip(journeyContent(d), latlng);
+    journeyTooltip(journeyContent(d));
   }
 
   function rerenderJourney() {
@@ -624,10 +688,9 @@
   if (canHover) {
     map.on('mousemove', function (e) {
       if (!journeyBody || mapBusy) return;
-      hideJourney();
+      hideJourney(true);
       journeyTimer = setTimeout(function () { fetchJourney(e.latlng); }, 140);
     });
-    map.on('mouseout', hideJourney);
   }
   map.on('dragstart zoomstart movestart', function () { mapBusy = true; hideJourney(); });
   map.on('dragend zoomend moveend', function () { mapBusy = false; });
@@ -657,6 +720,7 @@
     el.addEventListener('pointercancel', cancel);
   })();
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideJourney(); });
+  $('journey-close').addEventListener('click', function () { hideJourney(); });
 
   // Screen-reader sentence ("Within 30 min: 1027 stations") from vijay-team's summary module.
   var stopsPromise = null;
@@ -688,6 +752,7 @@
     btn.classList.add('loading');
     setStatus(t('calculating'));
     setJourneyBody(null);
+    lockOrigin(true);
     var started = performance.now();
     try {
       var fc = await callEngine(body);
@@ -696,9 +761,9 @@
       } else {
         setStatus(t('done', { s: ((performance.now() - started) / 1000).toFixed(1) }));
         speakSummary(fc);
-        setJourneyBody(fc && fc.meta && fc.meta.walkingModel === 'street' ? body : null);
+        setJourneyBody(fc && fc.meta && fc.meta.walkingModel === 'street' && !body.arriveBy ? body : null);
         if (fc && fc.meta && fc.meta.walkingModel === 'street') markStreetWalk();
-        else if (!(fc && fc.meta && fc.meta.walkOnly)) loadWalkArea(pin.getLatLng(), body.walking.accessMinutes);
+        else if (!(fc && fc.meta && fc.meta.walkOnly) && !body.arriveBy) loadWalkArea(pin.getLatLng(), body.walking.accessMinutes);
         if (window.matchMedia('(max-width: 700px)').matches) {
           panel.classList.add('collapsed');
           toggle.setAttribute('aria-expanded', 'false');
@@ -729,6 +794,7 @@
     var h = new URLSearchParams();
     h.set('ll', p.lat.toFixed(5) + ',' + p.lng.toFixed(5));
     Object.keys(HASH_FIELDS).forEach(function (k) { h.set(k, $(HASH_FIELDS[k]).value); });
+    h.set('a', $('arrive-by').checked ? '1' : '0');
     h.set('m', Array.prototype.slice.call(modesBox.querySelectorAll('input:checked'))
       .map(function (cb) { return cb.value; }).join(','));
     history.replaceState(null, '', '#' + h.toString());
@@ -749,11 +815,13 @@
       var on = h.get('m').split(',');
       modesBox.querySelectorAll('input').forEach(function (cb) { cb.checked = on.indexOf(cb.value) !== -1; });
     }
+    $('arrive-by').checked = h.get('a') === '1';
     syncTravel();
     return true;
   }
   $('form').addEventListener('submit', writeHash);
   var fromHash = readHash();
+  if (fromHash) lockOrigin(true);
 
   // vijay-team's /meta says which dates the timetable covers; warn when the chosen date is outside.
   var feed = null;
@@ -769,6 +837,29 @@
   fetch('/t/vijay-team/meta').then(function (r) { return r.json(); }).then(function (m) {
     if (m && m.feed && m.feed.validFrom && m.feed.validTo) { feed = m.feed; checkFeed(); }
   }).catch(function () { /* optional */ });
+
+  // ---- Reset: back to a clean map ----
+  $('reset-map').addEventListener('click', function () {
+    if (inflight) inflight.abort();
+    setJourneyBody(null);
+    if (overlay) { map.removeLayer(overlay); overlay = null; }
+    lastBands = null;
+    $('legend').hidden = true;
+    $('summary').textContent = '';
+    clearWalk();
+    setStatus('');
+    $('form').reset();
+    $('start-time').value = nowLocalValue();
+    modesBox.querySelectorAll('input').forEach(function (cb) { cb.checked = true; });
+    syncTravel();
+    checkFeed();
+    clearTimeout(clickTimer);
+    lockOrigin(false);
+    pin.setLatLng(STOCKHOLM);
+    showOrigin();
+    map.setView(STOCKHOLM, 11);
+    history.replaceState(null, '', location.pathname + location.search);
+  });
 
   applyLang();
   if (fromHash) $('form').requestSubmit();

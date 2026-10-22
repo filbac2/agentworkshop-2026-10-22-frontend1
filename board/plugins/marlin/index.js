@@ -267,8 +267,13 @@ function parseRequest(body) {
     throw new ApiError('bad_request', 'walking must be an object.');
   }
 
+  // Arrive-by (vijay-team's ideas doc: "Arrive-by needs marlin"): the same
+  // time field is read, but means the deadline you need to arrive by instead
+  // of the departure time. A dedicated `deadline` alias is accepted too, so a
+  // caller doesn't have to rename a field it already sends for the forward case.
+  const arriveBy = !!pick(input, ['arriveBy', 'arrive_by']);
   const { startSec, dayType, startDate } = parseStart(
-    pick(input, ['startTime', 'start_time', 'start']),
+    pick(input, ['startTime', 'start_time', 'start', 'deadline', 'deadlineTime', 'deadline_time']),
     pick(input, ['day', 'dayType', 'day_type']));
 
   const bandMinutes = num(pick(input, ['bandMinutes', 'bandMin', 'band_min']),
@@ -300,6 +305,7 @@ function parseRequest(body) {
     origin: { lat, lon },
     dayType,
     startSec,
+    arriveBy,
     maxTravelSeconds: Math.round(maxTravelMinutes * 60),
     maxWaitSeconds: Math.round(maxWaitMinutes * 60),
     maxTransfers: Math.round(maxTransfers),
@@ -317,7 +323,7 @@ function parseRequest(body) {
 
 function cacheKey(q) {
   return [
-    q.origin.lat.toFixed(5), q.origin.lon.toFixed(5), q.dayType, q.startSec,
+    q.origin.lat.toFixed(5), q.origin.lon.toFixed(5), q.dayType, q.startSec, q.arriveBy,
     q.maxTravelSeconds, q.maxWaitSeconds, q.maxTransfers,
     q.allowedModes.slice().sort().join(','),
     q.walkSpeedMs.toFixed(3), q.accessSeconds, q.egressSeconds,
@@ -338,15 +344,37 @@ function computeIsochrone(q) {
 
   const net = state.store.get(q.dayType);
   const started = Date.now();
-  const result = engine.search(net, q);
+
+  // Arrive-by runs the time-reversed scan (searchReverse) and gets back
+  // "latest time you can still be at stop i", not "earliest arrival". Convert
+  // that to a travel-time array (deadline minus that time) with the same INF
+  // sentinel engine.search uses, so bands.build's one arrival-to-travel-time
+  // subtraction (`arrival[i] - startSec`) stays correct for both directions:
+  // pass startSec: 0 here, since the subtraction has already happened.
+  let result;
+  let bandsArrival;
+  let bandsStartSec;
+  if (q.arriveBy) {
+    result = engine.searchReverse(net, Object.assign({}, q, { deadlineSec: q.startSec }));
+    const travel = new Int32Array(net.stops.length);
+    for (let i = 0; i < travel.length; i++) {
+      travel[i] = result.arrival[i] === -1 ? engine.INF : q.startSec - result.arrival[i];
+    }
+    bandsArrival = travel;
+    bandsStartSec = 0;
+  } else {
+    result = engine.search(net, q);
+    bandsArrival = result.arrival;
+    bandsStartSec = q.startSec;
+  }
 
   if (result.originStops === 0) throw new ApiError('no_stops_near_origin');
   if (result.reached === 0) throw new ApiError('nothing_reachable');
 
   const bandCount = Math.max(1, Math.ceil(q.maxTravelSeconds / q.bandSeconds));
-  const features = bands.build(net, result.arrival, {
+  const features = bands.build(net, bandsArrival, {
     origin: q.origin,
-    startSec: q.startSec,
+    startSec: bandsStartSec,
     bandSeconds: q.bandSeconds,
     bandCount,
     walkSpeedMs: q.walkSpeedMs,
@@ -358,7 +386,9 @@ function computeIsochrone(q) {
     type: 'FeatureCollection',
     meta: {
       origin: q.origin,
-      startTime: q.startISO,
+      arriveBy: q.arriveBy,
+      startTime: q.arriveBy ? undefined : q.startISO,
+      deadline: q.arriveBy ? q.startISO : undefined,
       startTimeLocal: formatHHMM(q.startSec),
       day: q.dayType,
       bandMinutes: q.bandMinutes,
@@ -368,7 +398,7 @@ function computeIsochrone(q) {
       computedMs: Date.now() - started,
       dataVersion: net.dataVersion,
       source: net.source,
-      algorithm: 'rounds+scan',
+      algorithm: q.arriveBy ? 'rounds+scan (reversed)' : 'rounds+scan',
       cumulativeBands: true,
     },
     features,

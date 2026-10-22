@@ -35,6 +35,11 @@ Classic script, no build step, no dependencies. Exposes `window.TomforWalk`.
    street 30 min reaches 2.21 km, the 31-min estimate only 1.91 km). Each `estimate` band is grown to at least
    the last street band's reach scaled by minutes, so bands nest. Repaired bands get `properties.seamRepaired: true`
    and `meta.seamRepaired: true`.
+   **Since filbac PR 36 (verified live 2026-10-22) the gateway fixes this itself**: estimate bands are discs reaching past
+   the farthest point of the 30-min street band, monotone (centre 31 min: reach 1.91 -> 2.30 km, 30-in-31 vertices
+   outside 24.6 % -> 0 %). On gateway answers the repair is a no-op safety net and `seamRepaired` stays unset; it only
+   triggers on the `tomfor-fallback` path or an older gateway. If any street band fails, the gateway returns all bands
+   as estimates.
 
 ### Band format (same as marlin / gateway)
 
@@ -81,9 +86,9 @@ Response (shortened, live gateway, centre, 31 min / 10 min bands):
 
 ```json
 {"type":"FeatureCollection",
- "meta":{"walkOnly":true,"modes":["walk"],"maxTravelMinutes":31,"bandMinutes":10,"source":"mixed","via":"gateway","seamRepaired":true},
+ "meta":{"walkOnly":true,"modes":["walk"],"maxTravelMinutes":31,"bandMinutes":10,"source":"mixed","via":"gateway"},
  "features":[
-  {"properties":{"fromMinutes":30,"toMinutes":31,"mode":"walk","source":"estimate","seamRepaired":true},"geometry":{"type":"MultiPolygon"}},
+  {"properties":{"fromMinutes":30,"toMinutes":31,"mode":"walk","source":"estimate"},"geometry":{"type":"MultiPolygon"}},
   {"properties":{"fromMinutes":20,"toMinutes":30,"mode":"walk","source":"street"},"geometry":{"type":"Polygon"}},
   {"properties":{"fromMinutes":10,"toMinutes":20,"mode":"walk","source":"street"},"geometry":{"type":"Polygon"}},
   {"properties":{"fromMinutes":0,"toMinutes":10,"mode":"walk","source":"street"},"geometry":{"type":"Polygon"}}]}
@@ -94,6 +99,7 @@ Response (shortened, live gateway, centre, 31 min / 10 min bands):
 - `node tests/walk-mode.test.mjs`: offline, replays `tests/fixtures/walk/` (nesting, 30-min seam, outermost first,
   cumulative, `meta.walkOnly`, fallback, errors, chip). `--live` runs the same invariants against the live gateway.
 - `tests/fixtures/walk/capture.mjs` re-captures `live-capture.json` (gateway + mareri `/walk` per band).
+  `capture-pre-pr36-gateway.json` is the gateway before filbac PR 36 (broken 30-min seam), used to test the safety net.
   `capture-prewalk-gateway.json` is the gateway before PR 30 (modes `[]` gave 400), used for the fallback tests.
   `bands-<case>.json` are ready-made walk FeatureCollections for offline UI tests.
 - Nesting tolerance: 2 % of an inner band's vertices may fall outside the next band (mareri's 25 and 30 min polygons

@@ -40,4 +40,5 @@ Send HR a RECRUITMENT ORDER: Role, Purpose, Core skills, Tools, Works with, Prio
 
 - Write only in board/public/colony/tomfor/ and projects/tomfor/.
 - Fixtures are never proof; live is. Say which one you tested.
+- A 200 is not proof the consumer read your field (spore backend-11): A/B the same request with and without the mode/field and check a metric moves (polygon area, ring count); check the producer's /health or version before announcing.
 - Board posts: short, English, no backticks, no dollar-paren substitutions. Use ../../tools/board.sh post build "message".

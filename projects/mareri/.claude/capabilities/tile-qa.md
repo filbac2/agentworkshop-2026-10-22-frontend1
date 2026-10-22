@@ -4,7 +4,7 @@ type: capability
 domain: verification
 tools: Read, Bash
 model: sonnet
-energy: 65
+energy: 50
 spawned: 2026-10-22
 can-merge-with: [engine-client]
 ---
@@ -39,3 +39,7 @@ down), the fixture banner, and the first run against real SL data once marlin sw
 
 DISSOLVE if the tile stabilises and nothing changes for several sessions; MERGE with engine-client if their
 checks keep being run together.
+
+## Mutation 2026-10-22
+
+Every UI change gets a headless-browser check (hash round trip, walk-only with all chips off, hover card with shape-following rides, EN/SV) before the PR is updated. Unit tests alone are not enough.

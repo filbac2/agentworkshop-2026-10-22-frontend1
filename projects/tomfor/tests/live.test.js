@@ -1,4 +1,4 @@
-// Live contract checks for vijay-team, marlin and mareri. Run: node tests/live.test.js [baseUrl]
+// Live contract checks for vijay-team, marlin and mareri (/isochrone, /journey). Run: node tests/live.test.js [baseUrl]
 const BASE = process.argv[2] || 'https://frontend1.torget.bjarby.com';
 const MODES = ['bus', 'metro', 'tram', 'train', 'commuter_rail', 'boat'];
 let fails = 0;
@@ -159,8 +159,88 @@ async function mareri() {
   checkError('mareri open sea', await call('POST', P, { origin: { lat: 59.2, lon: 19.2 } }), 422, 'no_stops_near_origin');
 }
 
+// mareri PR 26: POST /t/mareri/journey = /isochrone request + target; one journey with legs (CONTRACT.md).
+async function mareriJourney() {
+  const J = '/t/mareri/journey';
+  const req = (target, extra = {}) => ({ origin: { lat: 59.3313, lon: 18.0593 }, startTime: '2026-10-22T09:00:00+02:00', maxTravelMinutes: 45, target, ...extra });
+  const ok = await call('POST', J, req({ lat: 59.3, lon: 18.075 }));
+  if (ok.status === 404 && ok.json?.error !== 'not_reachable') { console.log('INFO mareri /journey not live yet (404), skipped'); return; }
+  check('journey 200', ok.status === 200, `${ok.status} ${short(ok.json ?? ok.text)}`);
+  console.log('INFO mareri journey latency ms:', ok.ms);
+  const j = ok.json;
+  if (ok.status === 200 && j) {
+    check('journey summary fields', typeof j.totalMinutes === 'number' && j.totalMinutes <= 45 && typeof j.arriveTime === 'string' && Number.isInteger(j.transfers) && typeof j.walkMinutes === 'number' && j.origin && j.target && j.startTime, short({ ...j, legs: undefined }));
+    check('journey walkingModel street|mixed', ['street', 'mixed'].includes(j.walkingModel), short(j.walkingModel));
+    const legs = Array.isArray(j.legs) ? j.legs : [];
+    check('journey has legs of type walk|ride', legs.length > 0 && legs.every((l) => l.type === 'walk' || l.type === 'ride'), short(legs.map((l) => l.type)));
+    const inSthlm = (p) => Array.isArray(p) && p[0] > 58.5 && p[0] < 60.5 && p[1] > 17 && p[1] < 19.5;
+    check('journey leg paths are [lat,lon] pairs in Stockholm', legs.every((l) => Array.isArray(l.path) && l.path.length >= 2 && l.path.every(inSthlm)), short(legs[0]?.path?.slice(0, 2)));
+    const walks = legs.filter((l) => l.type === 'walk'), rides = legs.filter((l) => l.type === 'ride');
+    check('journey walk legs: minutes, meters, street', walks.every((l) => typeof l.minutes === 'number' && typeof l.meters === 'number' && typeof l.street === 'boolean'), short(walks[0]));
+    check('journey ride legs: line, from/to names, stops', rides.every((l) => l.line && l.from?.name && l.to?.name && l.stops > 0), short(rides[0]));
+    check('journey transfers = rides - 1', !rides.length || j.transfers === rides.length - 1, `${j.transfers} vs ${rides.length} rides`);
+  }
+  checkError('journey missing target', await call('POST', J, req(undefined)), 400, 'bad_request');
+  checkError('journey target lat 91', await call('POST', J, req({ lat: 91, lon: 18 })), 400, 'bad_request');
+  checkError('journey Uppsala in 10 min', await call('POST', J, req({ lat: 59.8586, lon: 17.6389 }, { maxTravelMinutes: 10 })), 404, 'not_reachable');
+  const get = await call('GET', J);
+  check('journey GET -> 405', get.status === 405, get.status);
+}
+
+// marlin PR 39 / CONTRACT v1.3: arriveBy:true turns startTime (or deadline) into the arrival deadline.
+async function marlinArriveBy() {
+  const P = '/t/marlin/isochrone';
+  const base = { origin: { lat: 59.3326, lon: 18.0649 }, startTime: '2026-10-22T09:00:00+02:00', maxTravelMinutes: 30 };
+  const ab = await call('POST', P, { ...base, arriveBy: true });
+  if (ab.status === 200 && ab.json?.meta?.arriveBy !== true) {
+    console.log('SKIP arrive-by not live yet (meta.arriveBy missing, flag ignored):', short(ab.json?.meta));
+    return;
+  }
+  check('arriveBy 200', ab.status === 200, `${ab.status} ${short(ab.json ?? ab.text)}`);
+  if (ab.status !== 200) return;
+  console.log('INFO arrive-by latency ms:', ab.ms);
+  const j = ab.json, f = j.features || [];
+  check('arriveBy FeatureCollection, 6 bands', j.type === 'FeatureCollection' && f.length === 6, `${j.type} ${f.length}`);
+  check('arriveBy meta.arriveBy true', j.meta.arriveBy === true, short(j.meta.arriveBy));
+  check('arriveBy meta.deadline echoed with offset', j.meta.deadline === '2026-10-22T09:00:00+02:00', short(j.meta.deadline));
+  check('arriveBy meta.startTime not echoed', j.meta.startTime === undefined, short(j.meta.startTime));
+  check('arriveBy meta budget/bands', j.meta.maxTravelMinutes === 30 && j.meta.bandMinutes === 5 && j.meta.cumulativeBands === true, short(j.meta));
+  check('arriveBy bands outermost first, bandIndex 6..1', f.every((x, i) => x.properties.toMinutes === 30 - i * 5 && x.properties.fromMinutes === 25 - i * 5 && x.properties.bandIndex === 6 - i), short(f.map((x) => [x.properties.fromMinutes, x.properties.toMinutes])));
+  check('arriveBy bands nested (stops non-increasing inward)', f.every((x, i) => i === 0 || (x.properties.stops ?? 0) <= (f[i - 1].properties.stops ?? 0)), short(f.map((x) => x.properties.stops)));
+  check('arriveBy geometry MultiPolygon', f.every((x) => x.geometry?.type === 'MultiPolygon'), short(f[0]?.geometry?.type));
+  check('arriveBy outermost band has area', (f[0]?.geometry?.coordinates?.length ?? 0) > 0, 'empty');
+
+  // A/B: same origin and time, depart-at vs arrive-by must not be the same answer.
+  const fw = await call('POST', P, base);
+  const sig = (r) => JSON.stringify((r.json?.features || []).map((x) => [x.properties.stops, x.geometry?.coordinates]));
+  check('A/B depart-at meta.arriveBy not true', fw.json?.meta?.arriveBy !== true, short(fw.json?.meta?.arriveBy));
+  check('A/B arrive-by result differs from depart-at', sig(ab) !== sig(fw), 'identical features: arriveBy ignored?');
+  console.log('INFO A/B stopsReached depart-at', fw.json?.meta?.stopsReached, 'arrive-by', j.meta.stopsReached,
+    '| band stops fw', short(fw.json?.features?.map((x) => x.properties.stops)), 'ab', short(f.map((x) => x.properties.stops)));
+
+  const dl = await call('POST', P, { origin: base.origin, deadline: '2026-10-22T09:00:00+02:00', maxTravelMinutes: 30, arriveBy: true });
+  check('deadline alias accepted and echoed', dl.status === 200 && dl.json?.meta?.deadline === '2026-10-22T09:00:00+02:00', `${dl.status} ${short(dl.json?.meta ?? dl.text)}`);
+
+  for (const v of ['false', 'yes', 1]) {
+    checkError(`arriveBy ${JSON.stringify(v)} (not boolean)`, await call('POST', P, { ...base, arriveBy: v }), 400, 'bad_request');
+  }
+}
+
+// Only with PERF=1: 3 sequential 120-minute queries (heavy, ~5 MB each), report timings, no pass/fail.
+async function marlinPerf() {
+  if (!process.env.PERF) { console.log('SKIP perf (set PERF=1)'); return; }
+  const body = { origin: { lat: 59.3303, lon: 18.0586 }, startTime: '2026-10-22T09:00:00+02:00', maxTravelMinutes: 120 };
+  const ms = [];
+  for (let i = 0; i < 3; i++) {
+    const r = await call('POST', '/t/marlin/isochrone', body);
+    ms.push(r.ms);
+    console.log(`INFO perf 120 min run ${i + 1}: ${r.status} ${r.ms} ms ${(r.text.length / 1e6).toFixed(1)} MB computedMs=${r.json?.meta?.computedMs}`);
+  }
+  console.log('INFO perf 120 min median ms:', [...ms].sort((a, b) => a - b)[1]);
+}
+
 (async () => {
-  for (const [name, fn] of [['vijay-team', vijay], ['marlin', marlin], ['mareri', mareri]]) {
+  for (const [name, fn] of [['vijay-team', vijay], ['marlin', marlin], ['marlin-arriveBy', marlinArriveBy], ['marlin-perf', marlinPerf], ['mareri', mareri], ['mareri-journey', mareriJourney]]) {
     console.log(`\n== ${name} ==`);
     try { await fn(); } catch (e) { fails++; console.log('FAIL', name, 'threw', e.message); }
   }

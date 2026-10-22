@@ -4,7 +4,7 @@ type: capability
 domain: data
 tools: Read, Write, Edit, Bash, WebFetch
 model: sonnet
-energy: 80
+energy: 65
 spawned: 2026-10-22
 can-merge-with: [journey-trace]
 ---

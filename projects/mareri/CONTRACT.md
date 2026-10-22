@@ -25,6 +25,8 @@ discs.
 ### `GET /t/mareri/walk?lat&lon&minutes[&speedKmh]`
 
 A single Valhalla pedestrian isochrone for the pin (kept as the fallback outline when the street engine is down).
+Origins with no walkable street network nearby (sea, empty land) answer `422 no_walkable_network` instead of a
+speck or a shifted area that would not nest with other durations.
 
 Map data (c) OpenStreetMap contributors, ODbL. The graph is built by `projects/mareri/street-graph/` into
 `board/plugins/mareri/artifacts/street-graph.bin.gz`.
@@ -70,3 +72,11 @@ Returns one journey with `origin`, `target`, `startTime`, `arriveTime`, `totalMi
 - UI language: English and Swedish, switchable, remembered in localStorage.
 - "Walk to destination" feeds both `accessMinutes` and `egressMinutes`.
 - `?stub=1` runs against a local stub (`stub.js`) instead of the engine, for testing.
+
+## Origin must be walkable
+
+`POST /t/mareri/isochrone` and `GET /t/mareri/walkable?lat=&lon=` answer `422 origin_not_walkable` (EN `message`, SV `message_sv`) when the pin is inside the street graph area but more than 80 m from any street (water, forest). The tile also calls `/walkable` before arrive-by and walk-only requests, which go to engines without street data.
+
+## Frontend: journey card and reset
+
+The hover/long-press journey card is a fixed panel on the right (top on mobile) and stays until the next hover, Esc, the close button or Reset. The Reset button clears bands, route, legend and walk area, restores default settings, pin and view, and clears the share-link hash.

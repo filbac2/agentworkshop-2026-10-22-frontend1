@@ -169,4 +169,161 @@ function search(net, opts) {
   return { arrival: best, reached, originStops, rounds };
 }
 
-module.exports = { search, haversine, lowerBound, accessStops, INF };
+/** Index of the last position (descending order) whose arrival is at or before `time`. */
+function arrUpperBoundDesc(order, arr, time, length) {
+  let lo = 0;
+  let hi = length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (arr[order[mid]] > time) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/**
+ * Connection indices sorted by arrival time, descending (ties by departure,
+ * descending). The forward scan needs departure-ascending order; the reverse
+ * scan below needs this, its time-mirror. Built once per network and cached
+ * on the net object, since vijay-team's artifacts are read once at boot and
+ * reused for every request.
+ */
+function arrOrderDesc(net) {
+  if (net._arrOrderDesc) return net._arrOrderDesc;
+  const { arr, dep, connectionCount } = net;
+  const order = new Int32Array(connectionCount);
+  for (let i = 0; i < connectionCount; i++) order[i] = i;
+  const asArray = Array.from(order);
+  asArray.sort((a, b) => (arr[b] - arr[a]) || (dep[b] - dep[a]));
+  net._arrOrderDesc = Int32Array.from(asArray);
+  return net._arrOrderDesc;
+}
+
+/**
+ * Arrive-by: the dual of `search`. Instead of "earliest arrival at every stop
+ * leaving no earlier than startSec", this finds "latest time you can still be
+ * at every stop and reach the destination (the pin) by deadlineSec" - the
+ * question vijay-team's ideas doc called out ("Arrive-by needs marlin").
+ *
+ * It is the same round-based connection scan, time-reversed:
+ *   - round 0 walks from the destination's egress radius backward (how late
+ *     can you leave a nearby stop and still walk in by the deadline);
+ *   - connections are scanned in descending arrival order instead of
+ *     ascending departure order, and a connection is usable once its arrival
+ *     is early enough to still make a feasible later leg (mirroring forward's
+ *     "boarded" check, but for alighting);
+ *   - walking transfers relax backward: being at `v` by `cur[v]` means you
+ *     could have left `s` as late as `cur[v] - walkSeconds(s, v)`.
+ *
+ * @returns {{arrival: Int32Array, reached: number, originStops: number, rounds: number}}
+ *   arrival[stopIndex] = latest time you can be at that stop, seconds after
+ *   midnight, or INF where no such time exists inside the budget. (Named
+ *   `arrival` like `search`'s result so callers - the cache, bands.build via
+ *   the travel-time transform in index.js - don't need a second code path.)
+ */
+function searchReverse(net, opts) {
+  const {
+    origin, deadlineSec, maxTravelSeconds, maxWaitSeconds, maxTransfers,
+    allowedModes, walkSpeedMs, egressSeconds, transferSeconds,
+  } = opts;
+
+  const NEG = -1; // seconds-after-midnight is always >= 0, so -1 means "no known time"
+  const stopCount = net.stops.length;
+  const cutoff = deadlineSec - maxTravelSeconds;
+
+  const best = new Int32Array(stopCount).fill(NEG);
+  const prev = new Int32Array(stopCount).fill(NEG);
+
+  // Round 0: walk in to the pin from nearby stops (egress, not access).
+  let originStops = 0;
+  for (const [i, metres] of accessStops(net, origin, egressSeconds * walkSpeedMs)) {
+    const walkSec = Math.round(metres / walkSpeedMs);
+    const latest = deadlineSec - walkSec;
+    if (deadlineSec - latest > maxTravelSeconds) continue;
+    best[i] = latest;
+    prev[i] = latest;
+    originStops++;
+  }
+
+  if (originStops === 0) return { arrival: best, reached: 0, originStops: 0, rounds: 0 };
+
+  const modeAllowed = new Uint8Array(net.modeNames.length);
+  for (let i = 0; i < net.modeNames.length; i++) {
+    modeAllowed[i] = allowedModes.indexOf(net.modeNames[i]) >= 0 ? 1 : 0;
+  }
+
+  const { from, to, dep, arr, trip, mode, connectionCount } = net;
+  const { transferOffset, transferTo, transferSec } = net;
+  const order = arrOrderDesc(net);
+  const startPos = arrUpperBoundDesc(order, arr, deadlineSec, connectionCount);
+  const maxLegs = maxTransfers + 1;
+
+  let rounds = 0;
+  const detrained = new Uint8Array(net.tripCount);
+
+  for (let leg = 1; leg <= maxLegs; leg++) {
+    const cur = prev.slice();
+    detrained.fill(0);
+    let improved = false;
+    rounds++;
+
+    for (let idx = startPos; idx < connectionCount; idx++) {
+      const c = order[idx];
+      if (arr[c] < cutoff) break;
+      if (!modeAllowed[mode[c]]) continue;
+
+      const t = trip[c];
+      if (!detrained[t]) {
+        const ready = prev[to[c]];
+        if (ready === NEG || ready < arr[c]) continue;
+        // Mirrors forward's "the leg nearest the pin is not wait-limited":
+        // here that is the leg furthest from the pin, i.e. the first one
+        // boarded walking backward from the deadline.
+        if (leg > 1 && ready - arr[c] > maxWaitSeconds) continue;
+        detrained[t] = 1;
+      }
+
+      const d = dep[c];
+      if (d >= cutoff && d > cur[from[c]]) {
+        cur[from[c]] = d;
+        improved = true;
+      }
+    }
+
+    if (!improved) break;
+
+    if (transferSeconds > 0) {
+      for (let pass = 0; pass < 3; pass++) {
+        let walked = false;
+        for (let s = 0; s < stopCount; s++) {
+          const end = transferOffset[s + 1];
+          for (let k = transferOffset[s]; k < end; k++) {
+            if (transferSec[k] > transferSeconds) continue;
+            const v = transferTo[k];
+            if (cur[v] === NEG) continue;
+            const candidate = cur[v] - transferSec[k];
+            if (candidate >= cutoff && candidate > cur[s]) {
+              cur[s] = candidate;
+              walked = true;
+            }
+          }
+        }
+        if (!walked) break;
+      }
+    }
+
+    for (let i = 0; i < stopCount; i++) {
+      if (cur[i] > best[i]) best[i] = cur[i];
+      prev[i] = cur[i];
+    }
+  }
+
+  let reached = 0;
+  for (let i = 0; i < stopCount; i++) if (best[i] !== NEG) reached++;
+
+  return { arrival: best, reached, originStops, rounds };
+}
+
+module.exports = {
+  search, searchReverse, haversine, lowerBound, arrUpperBoundDesc, accessStops, INF,
+};

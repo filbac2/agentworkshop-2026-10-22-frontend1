@@ -10,7 +10,9 @@
     "e2e": "PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/compare-mapapps.js mareri",
     "e2e:install": "PLAYWRIGHT_BROWSERS_PATH=.pw-browsers npx playwright install chromium",
     "e2e:acceptance": "PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/acceptance.js",
-    "e2e:links": "PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/links-runner.js"
+    "e2e:links": "PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/links-runner.js",
+    "e2e:walk": "PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/walk-only.js",
+    "e2e:pr26": "PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/pr26.js"
   },
   "keywords": [],
   "author": "",

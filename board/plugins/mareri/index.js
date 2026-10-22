@@ -15,6 +15,7 @@
 
 const zlib = require('zlib');
 const iso = require('./iso.js');
+const street = require('./street.js');
 const journey = require('./journey.js');
 
 const VALHALLA = 'https://valhalla1.openstreetmap.de/isochrone';
@@ -44,6 +45,36 @@ function upstreamError(msg) {
   const e = new Error(msg);
   e.upstream = true;
   return e;
+}
+
+function noNetworkError() {
+  const e = new Error('no walkable network at this point');
+  e.noNetwork = true;
+  return e;
+}
+
+function inRing(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+// Off-road origins make the router answer with a speck at the origin or with an area elsewhere;
+// neither nests with the other durations, so they are refused instead of returned.
+function usableArea(geom, lat, lon, minutes, speedKmh) {
+  const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+  const wantMetres = (speedKmh * 1000 / 60) * minutes * 0.3;
+  const kLon = Math.cos(lat * Math.PI / 180) * 111320;
+  const nearRing = (r) => r.some(([x, y]) => Math.hypot((x - lon) * kLon, (y - lat) * 111320) < 150);
+  if (!polys.some((p) => inRing(lon, lat, p[0]) || nearRing(p[0]))) return false;
+  let reach = 0;
+  for (const p of polys) {
+    for (const [x, y] of p[0]) reach = Math.max(reach, Math.hypot((x - lon) * kLon, (y - lat) * 111320));
+  }
+  return reach >= Math.min(wantMetres, 150);
 }
 
 async function walkArea(lat, lon, minutes, speedKmh) {
@@ -78,6 +109,8 @@ async function walkArea(lat, lon, minutes, speedKmh) {
   const data = await r.json();
   const feat = data && data.features && data.features[0];
   if (!feat || !feat.geometry) throw upstreamError('router returned no area');
+
+  if (!usableArea(feat.geometry, lat, lon, minutes, speedKmh)) throw noNetworkError();
 
   const out = {
     type: 'Feature',
@@ -140,6 +173,23 @@ function isoKey(q) {
     q.accessSeconds, q.egressSeconds, q.transferSeconds, q.bandSeconds].join('|');
 }
 
+const ORIGIN_SNAP_METRES = 80;
+
+/** False when the pin lies inside the street graph's area but not near any street (water, forest, ...). */
+function walkableOrigin(lat, lon) {
+  const g = street.load();
+  if (!g || !g.bbox) return true;
+  const b = g.bbox;
+  if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon) return true;
+  const hit = street.nearest(g, lat, lon);
+  return !!hit && hit.metres <= ORIGIN_SNAP_METRES;
+}
+
+function notWalkable(res) {
+  fail(res, 422, 'origin_not_walkable', 'This point is not on land you can walk from (water or no street nearby). Move the pin.',
+    'Den här punkten går inte att utgå från (vatten eller ingen gata i närheten). Flytta nålen.');
+}
+
 async function isochrone(req, res) {
   const m = marlin();
   if (!m || !m.state.store || !iso.available()) {
@@ -149,6 +199,7 @@ async function isochrone(req, res) {
   }
   try {
     const q = m.parseRequest(await readBody(req));
+    if (!walkableOrigin(q.origin.lat, q.origin.lon)) { notWalkable(res); return; }
     const key = isoKey(q);
     const hit = isoCache.get(key);
     if (hit) {
@@ -260,6 +311,13 @@ module.exports = {
       await journeyRoute(req, res);
       return true;
     }
+    if (route === '/walkable' && req.method === 'GET') {
+      const w = new URL(req.url, 'http://x').searchParams;
+      const lat = Number(w.get('lat')), lon = Number(w.get('lon'));
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) { fail(res, 400, 'bad_request', 'lat and lon are required.', 'lat och lon krävs.'); return true; }
+      if (!walkableOrigin(lat, lon)) notWalkable(res); else sendJson(req, res, 200, { walkable: true });
+      return true;
+    }
     if (req.method !== 'GET' || route !== '/walk') return false;
     const q = new URL(req.url, 'http://x').searchParams;
 
@@ -284,7 +342,9 @@ module.exports = {
     try {
       send(res, 200, await walkArea(lat, lon, minutes, speedKmh));
     } catch (err) {
-      if (err.name === 'AbortError') {
+      if (err.noNetwork) {
+        fail(res, 422, 'no_walkable_network', 'No walkable street network at this point.', 'Inget gångbart gatunät vid den här punkten.');
+      } else if (err.name === 'AbortError') {
         fail(res, 504, 'timeout', 'The street router took too long.', 'Ruttjänsten svarade för långsamt.');
       } else {
         console.error('[mareri]', err && err.message);
