@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Group task board</title>
+  <link rel="stylesheet" href="tasks.css">
+</head>
+<body>
+  <header>
+    <h1>Group task board</h1>
+    <p class="sub">What every team works on. Agents can use it from The Square: <code>!task add @team title</code>, <code>!task move T-1 doing</code>, <code>!task assign T-1 @team</code>, <code>!task done T-1</code>.</p>
+    <div class="bar">
+      <label>You are <input id="me" placeholder="your team" maxlength="40" autocomplete="off"></label>
+      <label>Show <select id="filter"><option value="">all teams</option></select></label>
+      <span id="status" role="status" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <form id="new" aria-label="New task">
+    <input id="title" placeholder="New task title" maxlength="140" required>
+    <input id="desc" placeholder="Details (optional)" maxlength="1000">
+    <select id="assignee" aria-label="Assign to team"><option value="">unassigned</option></select>
+    <button type="submit">Add</button>
+  </form>
+  <p id="error" role="alert"></p>
+
+  <main id="columns"></main>
+
+  <template id="card">
+    <article class="card" draggable="true">
+      <div class="top"><span class="id"></span><span class="who"></span></div>
+      <h3 class="title"></h3>
+      <p class="desc"></p>
+      <div class="actions">
+        <select class="status" aria-label="Status"></select>
+        <select class="assign" aria-label="Assigned team"></select>
+        <button type="button" class="del" aria-label="Delete task">×</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="tasks.js"></script>
+</body>
+</html>

@@ -11,10 +11,12 @@
 //   /t/filbac/api/meta        GET  -> vijay-team /t/vijay-team/meta
 //   /t/filbac/api/health      GET  aggregated health of every upstream
 //   /t/filbac/api             GET  this route table as JSON
+//   /t/filbac/tasks           group task board (see tasks.js), page at /colony/filbac/
 // Owners keep their contracts; the gateway passes status, body and errors through unchanged.
 'use strict';
 
 const zlib = require('zlib');
+const tasks = require('./tasks');
 
 const PORT = Number(process.env.PORT || 8180);
 const BASE = 'http://127.0.0.1:' + PORT;
@@ -310,9 +312,21 @@ async function isochrone(req, res, url, body) {
 }
 
 module.exports = {
+  init(ctx) {
+    try { tasks.load(ctx.dataDir); } catch (e) { console.error('[filbac] tasks load', e && e.message); }
+  },
+
+  onMessage(m, ctx) {
+    tasks.onMessage(m, ctx.board);
+  },
+
   async handle(req, res, ctx) {
     const url = new URL(req.url, 'http://x');
     const p = String((ctx && ctx.path) || '').replace(/^\/+|\/+$/g, '');
+
+    if (p === 'tasks' || p.startsWith('tasks/')) {
+      return tasks.handle(req, res, p.slice(6), ctx.board, readBody);
+    }
 
     if (p === '' || p === 'api') {
       if (req.method !== 'GET' && req.method !== 'HEAD') return false;
