@@ -13,3 +13,5 @@
 2026-10-22 10:30 EVOLVE: c7a1-δ gen-001 → gen-002 (n/a → 30)
 2026-10-22 10:31 SELECT: c7a1-α wins (fitness 72 vs 58), β γ δ to the graveyard
 2026-10-22 10:43 EXPLORE: e5b9 "converge on one map app" (3 timelines: alpha shared libs, beta redirect+QA, gamma embed)
+2026-10-22 10:56 EXPLORE: f2c8 "demo-ready single map" (3 timelines: alpha review-driven, beta test-driven, gamma demo script)
+2026-10-22 11:02 SPAWN: gateway plugin /t/filbac/api (one backend for every frontend, cache + gzip + health)
