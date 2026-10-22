@@ -13,11 +13,10 @@
 // Owners keep their contracts; the gateway passes status, body and errors through unchanged.
 'use strict';
 
-const http = require('http');
 const zlib = require('zlib');
 
 const PORT = Number(process.env.PORT || 8180);
-const HOST = '127.0.0.1';
+const BASE = 'http://127.0.0.1:' + PORT;
 const TIMEOUT_MS = 25000;
 const MAX_BODY = 64 * 1024;
 
@@ -45,7 +44,9 @@ const CACHE_MAX_BYTES = 6 * 1024 * 1024;
 const cache = new Map();
 const stats = { requests: 0, cacheHits: 0, upstreamErrors: 0 };
 
-const PASS_HEADERS = ['content-type', 'content-encoding', 'cache-control', 'etag', 'last-modified'];
+// fetch() decodes gzip, so content-encoding is never passed on; the gateway gzips again itself.
+const PASS_HEADERS = ['content-type', 'cache-control', 'etag', 'last-modified'];
+const SAFE_SEGMENT = /^[\p{L}\p{N}_\- ]+$/u;
 
 function sendJson(res, status, obj) {
   if (res.headersSent) return;
@@ -76,35 +77,24 @@ function readBody(req) {
 }
 
 // One upstream call. Always resolves: {status, headers, body} or {error}.
-function upstream(method, team, subpath, search, body, acceptEncoding) {
-  return new Promise((resolve) => {
-    let done = false;
-    const finish = (v) => { if (!done) { done = true; resolve(v); } };
-    try {
-      const headers = { accept: 'application/json' };
-      if (acceptEncoding) headers['accept-encoding'] = acceptEncoding;
-      if (body) {
-        headers['content-type'] = 'application/json';
-        headers['content-length'] = body.length;
-      }
-      const r = http.request({
-        host: HOST, port: PORT, method,
-        path: '/t/' + encodeURIComponent(team) + '/' + subpath + (search || ''),
-        headers, timeout: TIMEOUT_MS,
-      }, (up) => {
-        const chunks = [];
-        up.on('data', (c) => chunks.push(c));
-        up.on('end', () => finish({ status: up.statusCode, headers: up.headers, body: Buffer.concat(chunks) }));
-        up.on('error', (e) => finish({ error: e.message }));
-      });
-      r.on('timeout', () => { r.destroy(new Error('timeout')); });
-      r.on('error', (e) => finish({ error: e.message }));
-      if (body) r.write(body);
-      r.end();
-    } catch (e) {
-      finish({ error: e.message });
-    }
-  });
+// Loopback fetch to the owner's plugin, never via the Host header (spores backend-4, backend-8).
+async function upstream(method, team, subpath, search, body) {
+  const target = '/t/' + encodeURIComponent(team) + '/' + subpath;
+  // No traversal out of the owner's prefix (spore platforms-6).
+  if (new URL(target, BASE).pathname !== target) return { error: 'bad path' };
+  try {
+    const headers = { accept: 'application/json' };
+    if (body) headers['content-type'] = 'application/json';
+    const r = await fetch(BASE + target + (search || ''), {
+      method, headers, body: body || undefined, signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    const buf = Buffer.from(await r.arrayBuffer());
+    const h = {};
+    r.headers.forEach((v, k) => { h[k] = v; });
+    return { status: r.status, headers: h, body: buf };
+  } catch (e) {
+    return { error: (e && e.message) || 'upstream failed' };
+  }
 }
 
 function gzip(buf) {
@@ -167,7 +157,7 @@ function routeTable() {
 async function health(res) {
   const checks = await Promise.all(HEALTH.map(async (h) => {
     const t0 = Date.now();
-    const up = await upstream('GET', h.team, h.path, '', null, null);
+    const up = await upstream('GET', h.team, h.path, '', null);
     const ok = !up.error && up.status >= 200 && up.status < 300;
     return { name: h.name, owner: h.team, ok, status: up.status || null, ms: Date.now() - t0, error: up.error || undefined };
   }));
@@ -184,13 +174,13 @@ async function isochrone(req, res, url, body) {
     stats.cacheHits++;
   } else {
     state = 'miss';
-    const up = await upstream('POST', 'marlin', 'isochrone', url.search, body, null);
+    const up = await upstream('POST', 'marlin', 'isochrone', url.search, body);
     if (up.error) return false;
     entry = { at: Date.now(), up, gz: null };
     cachePut(key, entry);
   }
   let gzBody = null;
-  if (gz && !entry.up.headers['content-encoding'] && entry.up.body.length > 1024) {
+  if (gz && entry.up.body.length > 1024) {
     if (!entry.gz) entry.gz = await gzip(entry.up.body);
     gzBody = entry.gz;
   }
@@ -216,6 +206,10 @@ module.exports = {
     const [name, ...tail] = rest.split('/');
     const route = ROUTES[name];
     if (!route || (tail.length && !route.prefix) || (route.prefix && !tail.length)) return false;
+    if (!tail.every((s) => SAFE_SEGMENT.test(s))) {
+      gatewayError(res, 400, 'bad_request', 'Invalid path.', 'Ogiltig sökväg.');
+      return true;
+    }
 
     const method = req.method === 'HEAD' ? 'GET' : req.method;
     if (!route.methods.includes(method)) {
@@ -240,9 +234,12 @@ module.exports = {
       ok = await isochrone(req, res, url, body);
     } else {
       const subpath = route.path + (tail.length ? '/' + tail.map(encodeURIComponent).join('/') : '');
-      const up = await upstream(method, route.team, subpath, url.search, body, req.headers['accept-encoding'] || null);
+      const up = await upstream(method, route.team, subpath, url.search, body);
       ok = !up.error;
-      if (ok) relay(res, up);
+      if (ok) {
+        const gzBody = wantsGzip(req) && up.body.length > 1024 ? await gzip(up.body) : null;
+        relay(res, up, null, gzBody);
+      }
     }
     if (!ok) {
       stats.upstreamErrors++;
