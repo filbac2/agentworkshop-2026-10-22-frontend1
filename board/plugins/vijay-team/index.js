@@ -13,6 +13,22 @@ function loadShapes() {
   return shapes;
 }
 
+let routeDays = null;
+function loadRouteDays() {
+  if (!routeDays) {
+    routeDays = new Map();
+    for (const d of DAY_TYPES) {
+      const c = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(DATA, `connections-${d}.json.gz`))));
+      for (const r of c.routes) {
+        const k = r.mode + '|' + r.name;
+        if (!routeDays.has(k)) routeDays.set(k, []);
+        routeDays.get(k).push(d);
+      }
+    }
+  }
+  return routeDays;
+}
+
 function load(type) {
   if (!cache[type]) {
     const gz = fs.readFileSync(path.join(DATA, `network-${type}.json.gz`));
@@ -81,7 +97,8 @@ module.exports = {
     }
     if (p === 'routes') {
       const { routes } = loadShapes();
-      let list = routes.map((r) => ({ name: r.name, mode: r.mode, lines: r.lines.length }));
+      const rd = loadRouteDays();
+      let list = routes.map((r) => ({ name: r.name, mode: r.mode, lines: r.lines.length, days: rd.get(r.mode + '|' + r.name) || [] }));
       const modes = (q.get('modes') || '').split(',').filter(Boolean);
       if (modes.length) list = list.filter((r) => modes.includes(r.mode));
       return json(res, 200, list);

@@ -47,6 +47,29 @@ for (const r of shapes.routes) {
     for (const [lon, lat] of l) if (!(lon > 16 && lon < 20 && lat > 58 && lat < 60.5)) { fail(`shapes: point outside Stockholm on ${r.name}`); break; }
   }
 }
+// Every line end must be within 1 km of a stop of the same mode (union of all days), via a ~0.01 degree grid.
+const G = 0.01, KM_LAT = 111.32, KM_LON = 111.32 * Math.cos(59.3 * Math.PI / 180);
+const grid = {};
+for (const d of ['weekday', 'saturday', 'sunday']) {
+  for (const s of read('network-' + d).stops) {
+    for (const m of s.modes) ((grid[m + '|' + Math.floor(s.lat / G) + '|' + Math.floor(s.lon / G)] ||= []).push(s));
+  }
+}
+const near = (mode, lon, lat) => {
+  const gy = Math.floor(lat / G), gx = Math.floor(lon / G);
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    for (const s of grid[mode + '|' + (gy + dy) + '|' + (gx + dx)] || []) {
+      const dyk = (s.lat - lat) * KM_LAT, dxk = (s.lon - lon) * KM_LON;
+      if (dyk * dyk + dxk * dxk <= 1) return true;
+    }
+  }
+  return false;
+};
+for (const r of shapes.routes) {
+  for (const l of r.lines) {
+    for (const [lon, lat] of [l[0], l[l.length - 1]]) if (!near(r.mode, lon, lat)) fail(`shapes: ${r.mode} ${r.name} line end ${lat},${lon} >1 km from any same-mode stop`);
+  }
+}
 console.log(`shapes: ${shapes.routes.length} routes checked`);
 console.log(failures ? `FAILED (${failures})` : 'ALL PASS');
 process.exit(failures ? 1 : 0);

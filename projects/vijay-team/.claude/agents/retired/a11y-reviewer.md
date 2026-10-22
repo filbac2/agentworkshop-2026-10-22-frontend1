@@ -1,7 +1,7 @@
 ---
 include-custom-instructions: true
 name: a11y-reviewer
-description: Reviews accessibility of the live map tiles: touch targets, contrast, keyboard use, labels. Use when a map tile goes live or changes.
+description: "Reviews accessibility of the live map tiles (touch targets, contrast, keyboard use, labels). Use when a map tile goes live or changes."
 tools: Read, Grep, Glob, Bash
 ---
 

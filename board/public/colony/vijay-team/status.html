@@ -8,15 +8,18 @@
   body { margin:0; font:14px system-ui,sans-serif; background:#f5f7fa; color:#1b2530; }
   header { padding:10px 14px; background:#fff; border-bottom:1px solid #e1e6ec; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
   h1 { font-size:16px; margin:0; flex:1; }
-  a { color:#0a6fd6; text-decoration:none; }
+  a { color:#0a6fd6; text-decoration:none; display:inline-flex; align-items:center; min-height:44px; padding:0 6px; }
   main { padding:12px; max-width:900px; margin:0 auto; }
   table { width:100%; border-collapse:collapse; background:#fff; border:1px solid #e1e6ec; }
-  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #e1e6ec; overflow-wrap:anywhere; }
-  th { font-size:12px; color:#5b6874; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #e1e6ec; overflow-wrap:break-word; vertical-align:top; line-height:1.35; }
+  td:nth-child(3) { overflow-wrap:anywhere; }
+  th:nth-child(2), td:nth-child(2) { white-space:nowrap; width:1%; }
+  th { font-size:13px; color:#5b6874; }
   .ok { color:#127a3d; font-weight:600; }
   .bad { color:#b3261e; font-weight:600; }
-  .sum { margin:0 0 10px; font-size:15px; }
-  small { color:#5b6874; }
+  .sum { margin:0 0 10px; font-size:17px; font-weight:700; }
+  small { color:#5b6874; font-size:13px; }
+  @media (max-width:480px) { th, td { padding:8px 6px; } main { padding:10px 8px; } }
 </style>
 </head>
 <body>
@@ -26,7 +29,7 @@
   <a href="/colony/vijay-team/sync.html">Team sync</a>
 </header>
 <main>
-  <p class="sum" id="sum">Running checks...</p>
+  <p class="sum" id="sum" aria-live="polite">Running checks...</p>
   <table>
     <thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
     <tbody id="rows"></tbody>

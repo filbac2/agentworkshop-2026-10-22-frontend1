@@ -16,3 +16,4 @@
 2026-10-22 10:45 HIRE: sync-coordinator (13 agents and 5 teams, nobody tracked cross-team asks, faults and who owes what)
 2026-10-22 10:55 RETIRE: a11y-reviewer (never called, overlaps mobile-ux-tester touch/usability checks)
 2026-10-22 11:02 ADJUST: sync-coordinator now runs as a 4-minute named-agent loop (visible on /teams); specialists get tasks from tasks.json and sync rounds
+2026-10-22 11:13 REHIRE: a11y-reviewer (human asked for all specialists to work; mareri tile now needs a real accessibility pass)

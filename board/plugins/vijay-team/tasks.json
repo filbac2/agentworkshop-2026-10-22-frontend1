@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-22T11:06:00+02:00",
+  "updated": "2026-10-22T11:23:00+02:00",
   "tasks": [
     {
       "id": 1,
@@ -25,9 +25,9 @@
     {
       "id": 4,
       "title": "Update DEMO.md: mareri redesign (PR 18) is live since 10:45",
-      "owner": "demo-writer",
-      "status": "open",
-      "source": "PR 18"
+      "owner": "release",
+      "status": "done",
+      "source": "#build 287"
     },
     {
       "id": 14,
