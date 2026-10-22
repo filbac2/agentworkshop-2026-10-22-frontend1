@@ -139,6 +139,48 @@ module.exports = {
       const s = net.stops[idx];
       return json(res, 200, { stop: { index: idx, id: s.id, name: s.name, modes: s.modes }, day: type, from: hhmm(from), departures: out });
     }
+    if (p === 'service') {
+      const type = dayTypeOf(q);
+      const { net } = load(type);
+      const key = (q.get('stop') || '').trim();
+      const idx = /^\d+$/.test(key) && Number(key) < net.stops.length ? Number(key) : net.stops.findIndex((s) => s.id === key);
+      if (!key || idx < 0) return json(res, 400, { error: 'stop must be a station index or id from /stops or /nearby' });
+      const { c } = loadDepartures(type);
+      const perHour = new Array(24).fill(0);
+      const modes = {};
+      for (let i = c.offsets[idx]; i < c.offsets[idx + 1]; i++) {
+        const m = c.routes[c.route[i]].mode;
+        const e = modes[m] || (modes[m] = { first: Infinity, last: -1, departures: 0 });
+        e.first = Math.min(e.first, c.dep[i]);
+        e.last = Math.max(e.last, c.dep[i]);
+        e.departures++;
+        perHour[Math.floor(c.dep[i] / 3600) % 24]++;
+      }
+      const out = {};
+      for (const [m, e] of Object.entries(modes)) out[m] = { first: hhmm(e.first), last: hhmm(e.last), lastSec: e.last, departures: e.departures };
+      const s = net.stops[idx];
+      return json(res, 200, { stop: { index: idx, id: s.id, name: s.name }, day: type, modes: out, perHour, serviceAfterMidnight: Object.values(modes).some((e) => e.last >= 86400) });
+    }
+    if (p === 'frequency') {
+      const type = dayTypeOf(q);
+      const parse = (v, d) => {
+        if (!v) return d;
+        const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(v);
+        return m ? Number(m[1]) * 3600 + Number(m[2]) * 60 : NaN;
+      };
+      const from = parse(q.get('from'), 7 * 3600);
+      const to = parse(q.get('to'), 9 * 3600);
+      if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) return json(res, 400, { error: 'from and to must be HH:MM with to after from' });
+      const { c } = loadDepartures(type);
+      const { net } = load(type);
+      const out = [];
+      for (let s = 0; s < net.stops.length; s++) {
+        let n = 0;
+        for (let i = c.offsets[s]; i < c.offsets[s + 1]; i++) if (c.dep[i] >= from && c.dep[i] < to) n++;
+        if (n) out.push({ index: s, departures: n, avgHeadwayMin: Math.round(((to - from) / 60 / n) * 10) / 10 });
+      }
+      return json(res, 200, { day: type, from: hhmm(from), to: hhmm(to), stops: out });
+    }
     if (p === 'routes') {
       const { routes } = loadShapes();
       const rd = loadRouteDays();
@@ -168,6 +210,11 @@ module.exports = {
       for (const t of DAY_TYPES) {
         const { net } = load(t);
         out[t] = { date: net.date, generated: net.generated, stopCount: net.stops.length, tripCount: net.trips.length };
+      }
+      try {
+        out.feed = JSON.parse(fs.readFileSync(path.join(DATA, 'feed.json'), 'utf8'));
+      } catch {
+        out.feed = null;
       }
       return json(res, 200, out);
     }

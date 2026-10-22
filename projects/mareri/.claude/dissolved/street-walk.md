@@ -4,12 +4,15 @@ type: capability
 domain: integration
 tools: Read, Write, Edit, Bash, WebFetch
 model: sonnet
-energy: 50
+energy: 5
+dissolved: 2026-10-22
 spawned: 2026-10-22
 can-merge-with: [engine-client]
 ---
 
 # street-walk
+
+Dissolved: the street engine now owns walking; the Valhalla outline remains only as a code fallback.
 
 ## What This Enables
 

@@ -1,7 +1,9 @@
 (function () {
   'use strict';
 
-  var ENGINE_URL = '/t/marlin/isochrone';
+  var ENGINE_URL = '/t/mareri/isochrone';          // street-based walking
+  var FALLBACK_ENGINE_URL = '/t/marlin/isochrone'; // straight-line walking
+  var WALK_ENGINE_URL = '/t/filbac/api/isochrone'; // walking-only areas (no transport types)
   var TIMEOUT_MS = 20000;
   var MODES = ['bus', 'metro', 'tram', 'train', 'commuter_rail', 'boat'];
   var STOCKHOLM = [59.3293, 18.0686];
@@ -52,19 +54,35 @@
   walkPane.style.pointerEvents = 'none';
   var walkLayer = null;
   var walkMinutes = null;
+  var streetWalk = false;
   var walkToken = 0;
 
   function clearWalk() {
     walkToken++;
     if (walkLayer) { map.removeLayer(walkLayer); walkLayer = null; }
     walkMinutes = null;
+    streetWalk = false;
     $('walk-note').hidden = true;
   }
 
   function showWalkNote() {
-    if (walkMinutes === null) return;
+    var note = $('walk-note');
+    if (streetWalk) {
+      $('walk-text').textContent = t('walkStreet');
+      note.classList.add('street');
+      note.hidden = false;
+      return;
+    }
+    note.classList.remove('street');
+    if (walkMinutes === null) { note.hidden = true; return; }
     $('walk-text').textContent = t('walkReal', { n: walkMinutes });
-    $('walk-note').hidden = false;
+    note.hidden = false;
+  }
+
+  function markStreetWalk() {
+    clearWalk();
+    streetWalk = true;
+    showWalkNote();
   }
 
   async function loadWalkArea(p, minutes) {
@@ -91,7 +109,13 @@
     $('origin-out').textContent = p.lat.toFixed(5) + ', ' + p.lng.toFixed(5);
   }
   pin.on('drag', showOrigin);
-  map.on('click', function (e) { pin.setLatLng(e.latlng); showOrigin(); });
+  var suppressClickUntil = 0;
+  map.on('click', function (e) {
+    if (Date.now() < suppressClickUntil) return;
+    pin.setLatLng(e.latlng);
+    showOrigin();
+    setJourneyBody(null);
+  });
   showOrigin();
 
   // ---- Form setup ----
@@ -101,6 +125,7 @@
     var pct = ((v - 5) / (120 - 5)) * 100;
     maxTravel.style.setProperty('--pct', pct + '%');
     $('travel-out').textContent = t('minutes', { n: v });
+    maxTravel.setAttribute('aria-valuetext', t('minutes', { n: v }));
   }
   maxTravel.addEventListener('input', syncTravel);
 
@@ -140,6 +165,7 @@
   function applyLang() {
     document.documentElement.lang = lang;
     document.title = t('title');
+    if (typeof checkFeed === 'function') checkFeed();
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       el.textContent = t(el.getAttribute('data-i18n'));
     });
@@ -149,6 +175,8 @@
     if (lastBands) renderLegend(lastBands);
     showWalkNote();
     syncTravel();
+    if (journeyBody) $('journey-hint').textContent = t(canHover ? 'jHint' : 'jHintTouch');
+    rerenderJourney();
   }
   document.querySelectorAll('.lang button').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -280,8 +308,6 @@
   function readSettings() {
     var modes = Array.prototype.slice.call(modesBox.querySelectorAll('input:checked'))
       .map(function (cb) { return cb.value; });
-    if (!modes.length) throw new Error(t('err.noModes'));
-
     var start = new Date($('start-time').value);
     if (isNaN(start.getTime())) throw new Error(t('err.badTime'));
 
@@ -323,15 +349,11 @@
 
   var inflight = null;
 
-  async function callEngine(body) {
-    if (params.get('stub') === '1' && window.StubEngine) return window.StubEngine(body);
-    if (inflight) inflight.abort();
-    var ctrl = new AbortController();
-    inflight = ctrl;
-    var timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
+  // Posts to one engine. Returns {data} or throws an Error with .status / .isNetwork.
+  async function postEngine(url, body, ctrl) {
     var res;
     try {
-      res = await fetch(ENGINE_URL, {
+      res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -340,9 +362,6 @@
     } catch (e) {
       if (e.name !== 'AbortError') e.isNetwork = true;
       throw e;
-    } finally {
-      clearTimeout(timer);
-      if (inflight === ctrl) inflight = null;
     }
     var data = null;
     try { data = await res.json(); } catch (e) { /* not JSON */ }
@@ -358,6 +377,303 @@
     return data;
   }
 
+  // The street-based engine is preferred; marlin's straight-line engine answers when it is missing or broken.
+  function streetEngineDown(e) {
+    return e.isNetwork || e.status === 404 || e.status === 405 || e.status >= 500;
+  }
+
+  async function callEngine(body) {
+    if (params.get('stub') === '1' && window.StubEngine) return window.StubEngine(body);
+    if (inflight) inflight.abort();
+    var ctrl = new AbortController();
+    inflight = ctrl;
+    var timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
+    try {
+      try {
+        if (!body.modes.length) return await postEngine(WALK_ENGINE_URL, body, ctrl);
+        return await postEngine(ENGINE_URL, body, ctrl);
+      } catch (e) {
+        if (e.name === 'AbortError' || !streetEngineDown(e)) throw e;
+        return await postEngine(FALLBACK_ENGINE_URL, body, ctrl);
+      }
+    } finally {
+      clearTimeout(timer);
+      if (inflight === ctrl) inflight = null;
+    }
+  }
+
+  // ---- Journey: hover (or long-press) a point to see how you get there ----
+  var JOURNEY_URL = '/t/mareri/journey';
+  var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var journeyPane = map.createPane('journey');
+  journeyPane.style.zIndex = 470;
+  journeyPane.style.pointerEvents = 'none';
+  var journeyLayer = L.layerGroup().addTo(map);
+  var journeyBody = null;      // request behind the bands that are on screen
+  var journeyShown = null;     // {data, latlng}
+  var journeyTimer = null;
+  var journeyCtrl = null;
+  var journeyToken = 0;
+  var journeyCache = {};
+  var journeyCacheKeys = [];
+  var mapBusy = false;
+  var METRO_COLORS = { 10: '#1b6fd1', 11: '#1b6fd1', 13: '#d9261c', 14: '#d9261c', 17: '#1f9d55', 18: '#1f9d55', 19: '#1f9d55' };
+  var MODE_COLORS = { bus: '#1d4ed8', metro: '#d9261c', tram: '#7c3aed', train: '#d97706', commuter_rail: '#db2777', boat: '#0891b2' };
+
+  function legColor(leg) {
+    if (leg.mode === 'metro' && METRO_COLORS[leg.line]) return METRO_COLORS[leg.line];
+    return MODE_COLORS[leg.mode] || '#334155';
+  }
+
+  function hideJourney() {
+    journeyToken++;
+    clearTimeout(journeyTimer);
+    if (journeyCtrl) { journeyCtrl.abort(); journeyCtrl = null; }
+    journeyLayer.clearLayers();
+    journeyShown = null;
+  }
+
+  function journeyEl(tag, cls, text) {
+    var el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text !== undefined) el.textContent = text;
+    return el;
+  }
+
+  function journeyContent(d) {
+    var box = journeyEl('div', 'j-card');
+    var head = journeyEl('div', 'j-head');
+    head.appendChild(journeyEl('strong', 'j-total', t('minutes', { n: d.totalMinutes })));
+    var changes = d.transfers === 0 ? t('jDirect') : d.transfers === 1 ? t('jChange1') : t('jChanges', { n: d.transfers });
+    head.appendChild(journeyEl('span', 'j-sub', t('jArrive', { t: d.arriveTime }) + ' · ' + changes));
+    box.appendChild(head);
+    d.legs.forEach(function (leg, i) {
+      var row = journeyEl('div', 'j-row ' + leg.type);
+      if (leg.type === 'walk') {
+        row.appendChild(journeyEl('span', 'j-ico', '\uD83D\uDEB6'));
+        var txt = journeyEl('div', 'j-txt');
+        var last = i === d.legs.length - 1;
+        txt.appendChild(journeyEl('div', 'j-main', last || !leg.to.name
+          ? t('jWalkHere', { n: leg.minutes })
+          : t('jWalkTo', { n: leg.minutes, name: leg.to.name })));
+        txt.appendChild(journeyEl('div', 'j-meta', leg.meters + ' m' + (leg.street ? '' : ' · ' + t('jEstimatedWalk'))));
+        row.appendChild(txt);
+      } else {
+        var badge = journeyEl('span', 'j-badge', (MODE_ICONS[leg.mode] || '') + (leg.line ? ' ' + leg.line : ''));
+        badge.style.background = legColor(leg);
+        row.appendChild(badge);
+        var rt = journeyEl('div', 'j-txt');
+        rt.appendChild(journeyEl('div', 'j-main', leg.from.name + ' \u2192 ' + leg.to.name));
+        var meta = leg.depart + '\u2013' + leg.arrive + ' \u00B7 ' + t(leg.stops === 1 ? 'jStop1' : 'jStops', { n: leg.stops });
+        if (leg.waitMinutes > 0) meta += ' \u00B7 ' + t('jWait', { n: leg.waitMinutes });
+        rt.appendChild(journeyEl('div', 'j-meta', meta));
+        row.appendChild(rt);
+      }
+      box.appendChild(row);
+    });
+    if (d.legs.some(function (leg) { return leg.type === 'ride' && !leg.shapePath; })) {
+      box.appendChild(journeyEl('div', 'j-meta', t('jSchematic')));
+    }
+    return box;
+  }
+
+  function journeyTooltip(content, latlng) {
+    var at = map.latLngToContainerPoint(latlng);
+    var tip = L.tooltip({
+      permanent: true, direction: at.x < map.getSize().x / 2 ? 'right' : 'left',
+      offset: [12, 0], opacity: 1, className: 'journey-tip', interactive: false
+    }).setLatLng(latlng).setContent(content).addTo(journeyLayer);
+    var rect = tip.getElement().getBoundingClientRect();
+    var bounds = map.getContainer().getBoundingClientRect();
+    var bottom = Math.min(bounds.bottom, window.innerHeight - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-h') || 0));
+    var dx = Math.max(bounds.left + 8 - rect.left, Math.min(0, bounds.right - 8 - rect.right));
+    var dy = Math.max(bounds.top + 8 - rect.top, Math.min(0, bottom - 8 - rect.bottom));
+    tip.setLatLng(map.containerPointToLatLng([at.x + dx, at.y + dy]));
+  }
+
+  function journeyNotice(latlng, key) {
+    journeyLayer.clearLayers();
+    journeyShown = null;
+    journeyTooltip(journeyEl('div', 'j-card', t(key)), latlng);
+  }
+
+  // Ride legs are drawn along the real line geometry (vijay-team /shape) when it can be matched to the stops.
+  var shapeCache = {};
+  function loadShape(mode, line) {
+    var key = mode + '/' + line;
+    if (!shapeCache[key]) {
+      shapeCache[key] = fetch('/t/vijay-team/shape/' + encodeURIComponent(mode) + '/' + encodeURIComponent(line))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (f) { return f && f.geometry && f.geometry.coordinates; })
+        .catch(function () { return null; });
+    }
+    return shapeCache[key];
+  }
+  function nearestVertex(line, p) {
+    var k = Math.cos(p.lat * Math.PI / 180), best = -1, bd = Infinity;
+    for (var i = 0; i < line.length; i++) {
+      var dx = (line[i][0] - p.lon) * k, dy = line[i][1] - p.lat, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = i; }
+    }
+    return { i: best, m: Math.sqrt(bd) * 111320 };
+  }
+  function sliceShape(lines, a, b) {
+    var best = null;
+    lines.forEach(function (line) {
+      var s = nearestVertex(line, a), e = nearestVertex(line, b);
+      if (s.m > 250 || e.m > 250 || s.i === e.i) return;
+      var cost = s.m + e.m + (s.i < e.i ? 0 : 1000);
+      if (!best || cost < best.cost) best = { cost: cost, line: line, s: s.i, e: e.i };
+    });
+    if (!best) return null;
+    var seg = best.s < best.e ? best.line.slice(best.s, best.e + 1) : best.line.slice(best.e, best.s + 1).reverse();
+    var pts = seg.map(function (c) { return [c[1], c[0]]; });
+    pts[0] = [a.lat, a.lon];
+    pts[pts.length - 1] = [b.lat, b.lon];
+    return pts;
+  }
+  function refineRides(d, latlng) {
+    var pending = d.legs.filter(function (leg) {
+      return leg.type === 'ride' && leg.line && !leg.shapePath && leg.shapeTried !== true;
+    });
+    if (!pending.length) return;
+    Promise.all(pending.map(function (leg) {
+      leg.shapeTried = true;
+      return loadShape(leg.mode, leg.line).then(function (lines) {
+        var pts = lines && sliceShape(lines, leg.from, leg.to);
+        if (pts) leg.shapePath = pts;
+      });
+    })).then(function () {
+      if (journeyShown && journeyShown.data === d && pending.some(function (l) { return l.shapePath; })) {
+        drawJourney(d, latlng);
+      }
+    });
+  }
+
+  function drawJourney(d, latlng) {
+    journeyLayer.clearLayers();
+    journeyShown = { data: d, latlng: latlng };
+    refineRides(d, latlng);
+    d.legs.forEach(function (leg) {
+      var pts = leg.shapePath || leg.path;
+      var base = { pane: 'journey', interactive: false, lineCap: 'round', lineJoin: 'round' };
+      if (leg.type === 'walk') {
+        L.polyline(pts, L.extend({ color: '#ffffff', weight: 7, opacity: 0.9 }, base)).addTo(journeyLayer);
+        L.polyline(pts, L.extend({ color: '#0f172a', weight: 3.5, dashArray: '1 6', opacity: 1 }, base)).addTo(journeyLayer);
+      } else {
+        L.polyline(pts, L.extend({ color: '#ffffff', weight: 9, opacity: 0.95 }, base)).addTo(journeyLayer);
+        L.polyline(pts, L.extend({ color: legColor(leg), weight: 5, opacity: 1 }, base)).addTo(journeyLayer);
+        [pts[0], pts[pts.length - 1]].forEach(function (p) {
+          L.circleMarker(p, { pane: 'journey', interactive: false, radius: 6, weight: 3, color: legColor(leg), fillColor: '#ffffff', fillOpacity: 1 }).addTo(journeyLayer);
+        });
+      }
+    });
+    var end = L.circleMarker([d.target.lat, d.target.lon], {
+      pane: 'journey', interactive: false, radius: 7, weight: 3, color: '#ffffff', fillColor: '#0f172a', fillOpacity: 1
+    });
+    end.addTo(journeyLayer);
+    journeyTooltip(journeyContent(d), latlng);
+  }
+
+  function rerenderJourney() {
+    if (journeyShown) drawJourney(journeyShown.data, journeyShown.latlng);
+  }
+
+  async function fetchJourney(latlng) {
+    if (!journeyBody) return;
+    var key = latlng.lat + ',' + latlng.lng;
+    var token = ++journeyToken;
+    if (journeyCtrl) journeyCtrl.abort();
+    if (journeyCache[key]) { drawJourney(journeyCache[key], latlng); return; }
+    var ctrl = new AbortController();
+    journeyCtrl = ctrl;
+    var timer = setTimeout(function () { ctrl.abort(); }, 8000);
+    try {
+      var body = Object.assign({}, journeyBody, { target: { lat: latlng.lat, lon: latlng.lng } });
+      var res = await fetch(JOURNEY_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal
+      });
+      if (token !== journeyToken) return;
+      if (!res.ok) {
+        journeyNotice(latlng, res.status === 404 ? 'jUnreachable' : 'jUnavailable');
+        return;
+      }
+      var data = await res.json();
+      if (token !== journeyToken) return;
+      journeyCache[key] = data;
+      journeyCacheKeys.push(key);
+      if (journeyCacheKeys.length > 60) delete journeyCache[journeyCacheKeys.shift()];
+      drawJourney(data, latlng);
+    } catch (e) {
+      if (token === journeyToken) journeyNotice(latlng, 'jUnavailable');
+    } finally {
+      clearTimeout(timer);
+      if (journeyCtrl === ctrl) journeyCtrl = null;
+    }
+  }
+
+  function setJourneyBody(body) {
+    hideJourney();
+    journeyCache = {};
+    journeyCacheKeys = [];
+    journeyBody = body && params.get('stub') !== '1' ? body : null;
+    $('journey-hint').hidden = !journeyBody;
+    $('journey-hint').textContent = t(canHover ? 'jHint' : 'jHintTouch');
+  }
+
+  if (canHover) {
+    map.on('mousemove', function (e) {
+      if (!journeyBody || mapBusy) return;
+      hideJourney();
+      journeyTimer = setTimeout(function () { fetchJourney(e.latlng); }, 140);
+    });
+    map.on('mouseout', hideJourney);
+  }
+  map.on('dragstart zoomstart movestart', function () { mapBusy = true; hideJourney(); });
+  map.on('dragend zoomend moveend', function () { mapBusy = false; });
+  pin.on('dragstart', function () { setJourneyBody(null); });
+
+  // Touch: press and hold shows the journey; a tap elsewhere hides it again.
+  (function () {
+    var holdTimer = null;
+    var startX = 0, startY = 0;
+    var el = map.getContainer();
+    function cancel() { clearTimeout(holdTimer); holdTimer = null; }
+    el.addEventListener('pointerdown', function (ev) {
+      if (ev.pointerType !== 'touch' || !journeyBody || ev.target.closest('.leaflet-control, .leaflet-marker-icon')) return;
+      startX = ev.clientX; startY = ev.clientY;
+      var latlng = map.mouseEventToLatLng(ev);
+      cancel();
+      holdTimer = setTimeout(function () {
+        holdTimer = null;
+        suppressClickUntil = Date.now() + 700;
+        fetchJourney(latlng);
+      }, 450);
+    });
+    el.addEventListener('pointermove', function (ev) {
+      if (holdTimer && Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 10) cancel();
+    });
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointercancel', cancel);
+  })();
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideJourney(); });
+
+  // Screen-reader sentence ("Within 30 min: 1027 stations") from vijay-team's summary module.
+  var stopsPromise = null;
+  function speakSummary(fc) {
+    var el = $('summary');
+    el.textContent = '';
+    if (!window.VijaySummary || (fc.meta && fc.meta.walkOnly)) return;
+    if (!stopsPromise) {
+      stopsPromise = fetch('/t/vijay-team/stops').then(function (r) { return r.json(); })
+        .catch(function () { stopsPromise = null; return null; });
+    }
+    stopsPromise.then(function (stops) {
+      if (!stops) return;
+      try { el.textContent = VijaySummary.describe(VijaySummary.summarize(fc, stops), lang); } catch (e) { /* optional */ }
+    });
+  }
+
   $('form').addEventListener('submit', async function (ev) {
     ev.preventDefault();
     var body;
@@ -371,6 +687,7 @@
     btn.disabled = true;
     btn.classList.add('loading');
     setStatus(t('calculating'));
+    setJourneyBody(null);
     var started = performance.now();
     try {
       var fc = await callEngine(body);
@@ -378,7 +695,10 @@
         setStatus(t('err.empty'), true);
       } else {
         setStatus(t('done', { s: ((performance.now() - started) / 1000).toFixed(1) }));
-        loadWalkArea(pin.getLatLng(), body.walking.accessMinutes);
+        speakSummary(fc);
+        setJourneyBody(fc && fc.meta && fc.meta.walkingModel === 'street' ? body : null);
+        if (fc && fc.meta && fc.meta.walkingModel === 'street') markStreetWalk();
+        else if (!(fc && fc.meta && fc.meta.walkOnly)) loadWalkArea(pin.getLatLng(), body.walking.accessMinutes);
         if (window.matchMedia('(max-width: 700px)').matches) {
           panel.classList.add('collapsed');
           toggle.setAttribute('aria-expanded', 'false');
@@ -402,5 +722,54 @@
     }).catch(function () { /* the Update call reports engine problems */ });
   }
 
+  // ---- Share link: pin and settings live in the URL hash ----
+  var HASH_FIELDS = { t: 'max-travel', w: 'max-wait', x: 'max-transfers', d: 'walk-dest', r: 'walk-transfer' };
+  function writeHash() {
+    var p = pin.getLatLng();
+    var h = new URLSearchParams();
+    h.set('ll', p.lat.toFixed(5) + ',' + p.lng.toFixed(5));
+    Object.keys(HASH_FIELDS).forEach(function (k) { h.set(k, $(HASH_FIELDS[k]).value); });
+    h.set('m', Array.prototype.slice.call(modesBox.querySelectorAll('input:checked'))
+      .map(function (cb) { return cb.value; }).join(','));
+    history.replaceState(null, '', '#' + h.toString());
+  }
+  function readHash() {
+    if (location.hash.length < 2) return false;
+    var h = new URLSearchParams(location.hash.slice(1));
+    var ll = (h.get('ll') || '').split(',').map(Number);
+    if (ll.length !== 2 || ll.some(isNaN) || Math.abs(ll[0]) > 90 || Math.abs(ll[1]) > 180) return false;
+    pin.setLatLng(ll);
+    map.setView(ll, 12);
+    showOrigin();
+    Object.keys(HASH_FIELDS).forEach(function (k) {
+      var v = parseInt(h.get(k), 10);
+      if (!isNaN(v)) $(HASH_FIELDS[k]).value = v;
+    });
+    if (h.has('m')) {
+      var on = h.get('m').split(',');
+      modesBox.querySelectorAll('input').forEach(function (cb) { cb.checked = on.indexOf(cb.value) !== -1; });
+    }
+    syncTravel();
+    return true;
+  }
+  $('form').addEventListener('submit', writeHash);
+  var fromHash = readHash();
+
+  // vijay-team's /meta says which dates the timetable covers; warn when the chosen date is outside.
+  var feed = null;
+  function dayKey(v) { return String(v).replace(/-/g, '').slice(0, 8); }
+  function checkFeed() {
+    var el = $('feed-warn');
+    var d = $('start-time').value;
+    var out = !!(feed && d) && (dayKey(d) < dayKey(feed.validFrom) || dayKey(d) > dayKey(feed.validTo));
+    el.hidden = !out;
+    if (out) el.textContent = t('warn.feed', { from: feed.validFrom, to: feed.validTo });
+  }
+  $('start-time').addEventListener('change', checkFeed);
+  fetch('/t/vijay-team/meta').then(function (r) { return r.json(); }).then(function (m) {
+    if (m && m.feed && m.feed.validFrom && m.feed.validTo) { feed = m.feed; checkFeed(); }
+  }).catch(function () { /* optional */ });
+
   applyLang();
+  if (fromHash) $('form').requestSubmit();
 })();

@@ -14,6 +14,7 @@ tomfor has no tile page: per filbac's `#build` post 290 the group shows one tile
 | `/colony/tomfor/errors.js` | clear EN/SV error messages (what happened + what to do), `fetchJson` |
 | `/colony/tomfor/search.js` | debounced address search (Nominatim, Stockholm area) and "my location" |
 | `/colony/tomfor/mareri-adapter.js` | classic script for the group app: wording, aria-labels, `window.TomforMareri.errorText` |
+| `/colony/tomfor/walk-mode.js` | classic script: walk-only bands via filbac's gateway (mareri `/walk` fallback, 30-min seam repair) and a Walk chip, `window.TomforWalk`. See [WALK-CONTRACT.md](WALK-CONTRACT.md) |
 
 Classic script load (between the app's `i18n.js` and `app.js`):
 

@@ -12,6 +12,9 @@ Source: SL GTFS (feed 2026-10-21) preprocessed offline by `projects/vijay-team/p
 | `GET /nearby?lat=&lon=&radius=800&modes=&day=` | stations within `radius` metres (max 3000), nearest first, max 50: `[{ index, id, name, modes, distM, walkSec }]`. `walkSec` is straight-line at 1.3 m/s. 400 if lat/lon are missing, empty or out of range (lat first). Any endpoint with an unknown `day` answers 400 |
 | `GET /connections?day=` | connections for RAPTOR/CSA (gzip JSON, ~3-4 MB), format below |
 | `GET /departures?stop=&time=HH:MM&day=&limit=10&modes=` | next departures from a station (`stop` = index or id from `/stops` or `/nearby`; `time` defaults to now in Stockholm; `limit` max 50): `{ stop, day, from, departures: [{ dep, depSec, route, mode, to, toIndex }] }`. 400 for an unknown stop or a bad time |
+| `GET /service?stop=&day=` | first and last departure per mode at a station, departures per hour (24 buckets) and `serviceAfterMidnight`; `last` above 24:00 wraps (`lastSec` keeps the raw value, e.g. 90024 = 01:00 next day) |
+| `GET /frequency?from=07:00&to=09:00&day=` | every station with service in the window: `{ stops: [{ index, departures, avgHeadwayMin }] }` for a service-quality layer. 400 if `to` is not after `from` |
+| `/meta` `feed` key | `{ version, publisher, validFrom, validTo }`: the timetable only covers `validFrom` to `validTo`; warn users who pick a date outside it |
 | `GET /routes?modes=` | `[{ name, mode, lines, days }]`: every route with line geometry; `days` lists the day types with service (empty = no trips in the feed) |
 | `GET /shape/<mode>/<name>` | GeoJSON Feature, `MultiLineString` (one line per direction, `[lon, lat]`, simplified to about 20 m). 404 if unknown. Example: `/shape/metro/10` |
 | `GET /meta` | per day type: `{ date, generated, stopCount, tripCount }` |

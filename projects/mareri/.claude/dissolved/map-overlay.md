@@ -4,9 +4,9 @@ type: capability
 domain: frontend
 tools: Read, Write, Edit, Bash
 model: sonnet
-energy: 70
+energy: 80
 spawned: 2026-10-22
-can-merge-with: [settings-i18n]
+can-merge-with: [tile-ui]
 ---
 
 # map-overlay

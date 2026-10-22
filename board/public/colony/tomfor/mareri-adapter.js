@@ -28,7 +28,16 @@
       'mode.walk': 'Walk',
       legendWalk: 'Walking only, along streets',
       walkOnly: 'All transport types are off, so the map shows only how far you can walk in {n} min.',
-      'err.walkUnavailable': 'The walking area could not be calculated right now. Turn on at least one transport type, or try again in a minute.'
+      'err.walkUnavailable': 'The walking area could not be calculated right now. Turn on at least one transport type, or try again in a minute.',
+      // Share link, screen-reader summary, departures card (#build 345 items 4, 6, 5): additive.
+      shareLink: 'Share link',
+      shareCopied: 'Link copied',
+      'err.shareFailed': 'The link could not be copied. Copy the address from the browser address bar instead.',
+      summaryHeading: 'Summary of the map',
+      bandsSummary: 'Within {min} min: {count} stations',
+      departuresTitle: 'Next departures',
+      departuresNone: 'No departures in the next hour from this stop.',
+      departuresTowards: 'Towards {dest}'
     },
     sv: {
       title: 'Restidskarta för Stockholm',
@@ -48,7 +57,15 @@
       'mode.walk': 'Gång',
       legendWalk: 'Endast gång, längs gator',
       walkOnly: 'Alla trafikslag är avstängda, så kartan visar bara hur långt du hinner gå på {n} min.',
-      'err.walkUnavailable': 'Gångområdet kunde inte beräknas just nu. Slå på minst ett trafikslag, eller försök igen om en minut.'
+      'err.walkUnavailable': 'Gångområdet kunde inte beräknas just nu. Slå på minst ett trafikslag, eller försök igen om en minut.',
+      shareLink: 'Dela länk',
+      shareCopied: 'Länken kopierad',
+      'err.shareFailed': 'Länken kunde inte kopieras. Kopiera adressen från webbläsarens adressfält i stället.',
+      summaryHeading: 'Sammanfattning av kartan',
+      bandsSummary: 'Inom {min} min: {count} stationer',
+      departuresTitle: 'Nästa avgångar',
+      departuresNone: 'Inga avgångar inom den närmaste timmen från den här hållplatsen.',
+      departuresTowards: 'Mot {dest}'
     }
   };
 

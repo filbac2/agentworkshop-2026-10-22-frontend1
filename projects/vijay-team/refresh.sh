@@ -15,5 +15,6 @@ echo "-> feed: $(tail -n 1 "$TMP/gtfs/feed_info.txt" | cut -d, -f5)"
 
 node "$ROOT/projects/vijay-team/preprocess.js" "$TMP/gtfs" "$ROOT/board/plugins/vijay-team/artifacts"
 node "$ROOT/projects/vijay-team/preprocess-shapes.js" "$TMP/gtfs" "$ROOT/board/plugins/vijay-team/artifacts"
+node "$ROOT/projects/vijay-team/preprocess-feed.js" "$TMP/gtfs" "$ROOT/board/plugins/vijay-team/artifacts"
 node "$ROOT/projects/vijay-team/check.js"
 echo "Done. Deliver: tools/pr.sh vijay-team \"Refresh SL data\""

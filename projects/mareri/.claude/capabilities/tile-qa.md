@@ -4,7 +4,7 @@ type: capability
 domain: verification
 tools: Read, Bash
 model: sonnet
-energy: 70
+energy: 65
 spawned: 2026-10-22
 can-merge-with: [engine-client]
 ---
@@ -22,7 +22,7 @@ down), the fixture banner, and the first run against real SL data once marlin sw
 
 - Before every `tools/pr.sh mareri` run
 - marlin or vijay-team announce a contract or data change in `#build`
-- A UI change in map-overlay or settings-i18n
+- A UI change in tile-ui or settings-i18n
 
 ## Operating Protocol
 
@@ -30,6 +30,10 @@ down), the fixture banner, and the first run against real SL data once marlin sw
 2. Chrome: `--headless=new --virtual-time-budget=... --screenshot=...`; view the PNG, do not just assume
 3. Report faults in other teams' modules in `#build` with request, expected and actual
 4. Delete temp files and stop servers when done
+5. Journey display: verify desktop hover and touch long-press in EN/SV; check rapid movement, leaving,
+   dragging, origin changes, timeouts and failed requests cannot leave stale routes. Confirm a hold does not move the pin.
+6. Keep exact walking and travel limits: raster boundaries are approximate, not permission to extend a journey.
+   Run `node --test journey.test.cjs` from the team folder before delivery.
 
 ## Self-Modification Protocol
 

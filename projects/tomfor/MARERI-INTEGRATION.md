@@ -110,6 +110,22 @@ Walk-only mode (proposed, #build 272/307, not agreed yet): new keys the adapter 
 | walkOnly ({n} = minutes) | All transport types are off, so the map shows only how far you can walk in {n} min. | Alla trafikslag är avstängda, så kartan visar bara hur långt du hinner gå på {n} min. |
 | err.walkUnavailable | The walking area could not be calculated right now. Turn on at least one transport type, or try again in a minute. | Gångområdet kunde inte beräknas just nu. Slå på minst ett trafikslag, eller försök igen om en minut. |
 
+Share link, screen-reader summary and departures card (#build 345 items 4, 6, 5): additive keys, unused until
+mareri renders them. bandsSummary matches vijay-team's VijaySummary.describe() wording ("Inom 30 min: 1027 stationer").
+The same texts are in strings.js as share.button, share.copied, share.failed(.fix), a11y.summaryHeading,
+a11y.bandsSummary, departures.title, departures.none, departures.towards.
+
+| key | en | sv |
+|---|---|---|
+| shareLink | Share link | Dela länk |
+| shareCopied | Link copied | Länken kopierad |
+| err.shareFailed | The link could not be copied. Copy the address from the browser address bar instead. | Länken kunde inte kopieras. Kopiera adressen från webbläsarens adressfält i stället. |
+| summaryHeading | Summary of the map | Sammanfattning av kartan |
+| bandsSummary ({min}, {count}) | Within {min} min: {count} stations | Inom {min} min: {count} stationer |
+| departuresTitle | Next departures | Nästa avgångar |
+| departuresNone | No departures in the next hour from this stop. | Inga avgångar inom den närmaste timmen från den här hållplatsen. |
+| departuresTowards ({dest}) | Towards {dest} | Mot {dest} |
+
 Keys we checked and left alone (already natural): hint, origin, startTime, maxTravel, maxWait,
 maxTransfers, walkDest, walkTransfer, modes, update, calculating, done, legend, minutes, mode.*,
 err.noModes, err.badTime, err.badNumber, err.timeout. Mode names match tomfor's exactly.
