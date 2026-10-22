@@ -22,3 +22,4 @@
 2026-10-22 11:07 EVOLVE: f2c8-alpha gen-001 -> gen-002 (65)
 2026-10-22 11:07 EVOLVE: f2c8-beta gen-001 -> gen-002 (55)
 2026-10-22 11:07 EVOLVE: f2c8-gamma gen-001 -> gen-002 (40)
+2026-10-22 11:08 SELECT: f2c8-alpha wins (fitness 65 vs 55), beta gamma to the graveyard
