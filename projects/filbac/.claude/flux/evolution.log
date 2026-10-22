@@ -41,3 +41,4 @@
 2026-10-22 11:28 CROSS: p9q2-alpha x w7d3-gamma -> p9q2-delta (gateway: mareri engine first, marlin fallback, walk-only wrap; baseline 60)
 2026-10-22 11:34 EVOLVE: p9q2-delta gen-001 -> gen-002 (72, walk-only part built and tested in the gateway, PR 30)
 2026-10-22 11:39 CROSS: p9q2-delta x e5b9-beta -> p9q2-epsilon (gateway features + live QA probes; baseline 78)
+2026-10-22 11:49 EXPLORE: m3s8 "answer tagged posts: walk seam fault" (3 timelines: alpha enclosing circle, beta scaled street polygon, gamma polygon union)

@@ -204,8 +204,11 @@ function parseWalkRequest(json) {
   return { lat, lon, speed, max, band };
 }
 
-function estimateCircle(lat, lon, minutes, speedKmh) {
-  const km = (speedKmh * minutes) / 60 / WALK_DETOUR;
+function estimateKm(minutes, speedKmh) {
+  return (speedKmh * minutes) / 60 / WALK_DETOUR;
+}
+
+function circle(lat, lon, km) {
   const dLat = km / 111.32;
   const dLon = km / (111.32 * Math.cos((lat * Math.PI) / 180));
   const ring = [];
@@ -216,26 +219,60 @@ function estimateCircle(lat, lon, minutes, speedKmh) {
   return { type: 'MultiPolygon', coordinates: [[ring]] };
 }
 
-async function walkBand(q, minutes) {
-  if (minutes <= WALK_STREET_MAX) {
-    const search = '?lat=' + q.lat + '&lon=' + q.lon + '&minutes=' + minutes + '&speedKmh=' + q.speed;
-    const up = await upstream('GET', 'mareri', 'walk', search, null);
-    if (!up.error && up.status === 200) {
-      try {
-        const f = JSON.parse(up.body.toString('utf8'));
-        if (f && f.geometry) return { geometry: f.geometry, source: 'street' };
-      } catch (e) { /* fall through to the estimate */ }
+// Largest distance (km) from the origin to any vertex of a GeoJSON geometry.
+function extentKm(lat, lon, geometry) {
+  const kx = 111.32 * Math.cos((lat * Math.PI) / 180);
+  let max = 0;
+  const walk = (c) => {
+    if (typeof c[0] === 'number') {
+      const d = Math.hypot((c[0] - lon) * kx, (c[1] - lat) * 111.32);
+      if (d > max) max = d;
+    } else {
+      for (const x of c) walk(x);
     }
-  }
-  return { geometry: estimateCircle(q.lat, q.lon, minutes, q.speed), source: 'estimate' };
+  };
+  walk((geometry && geometry.coordinates) || []);
+  return max;
 }
 
+async function streetBand(q, minutes) {
+  const search = '?lat=' + q.lat + '&lon=' + q.lon + '&minutes=' + minutes + '&speedKmh=' + q.speed;
+  const up = await upstream('GET', 'mareri', 'walk', search, null);
+  if (!up.error && up.status === 200) {
+    try {
+      const f = JSON.parse(up.body.toString('utf8'));
+      if (f && f.geometry) return f.geometry;
+    } catch (e) { /* treated as unavailable */ }
+  }
+  return null;
+}
+
+// Bands must nest: every band holds all nearer bands. Street bands come from mareri (<= 30 min).
+// Estimate discs are centred on the origin; a disc whose radius reaches the farthest vertex of the
+// street area holds that whole area, so the estimate radius is never below the street extent
+// (scaled by t / t_street) nor below the previous band. If any street band is missing, every band
+// is an estimate, so a gap can never put a smaller street band outside a larger one.
 async function walkOnly(q) {
   const t0 = Date.now();
   const edges = [];
   for (let m = q.band; m < q.max; m += q.band) edges.push(m);
   edges.push(q.max);
-  const parts = await Promise.all(edges.map((m) => walkBand(q, m)));
+  const streetEdges = edges.filter((m) => m <= WALK_STREET_MAX);
+  const street = await Promise.all(streetEdges.map((m) => streetBand(q, m)));
+  const allStreet = street.every(Boolean);
+  let ref = null;
+  if (allStreet && street.length) {
+    const last = street[street.length - 1];
+    ref = { minutes: streetEdges[streetEdges.length - 1], km: extentKm(q.lat, q.lon, last) };
+  }
+  let prevKm = 0;
+  const parts = edges.map((m, i) => {
+    if (allStreet && i < street.length) return { geometry: street[i], source: 'street' };
+    let km = Math.max(estimateKm(m, q.speed), prevKm);
+    if (ref) km = Math.max(km, ref.km * 1.01 * (m / ref.minutes));
+    prevKm = km;
+    return { geometry: circle(q.lat, q.lon, km), source: 'estimate' };
+  });
   const features = edges.map((to, i) => ({
     type: 'Feature',
     properties: {
