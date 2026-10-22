@@ -42,6 +42,10 @@ module.exports = {
     const q = url.searchParams;
     const p = ctx.path.replace(/^\/+|\/+$/g, '');
 
+    if (q.has('day') && !DAY_TYPES.includes(q.get('day'))) {
+      return json(res, 400, { error: 'day must be one of ' + DAY_TYPES.join(', ') });
+    }
+
     if (p === 'network') {
       const { gz } = load(dayTypeOf(q));
       res.writeHead(200, { 'content-type': 'application/json', 'content-encoding': 'gzip', 'cache-control': 'public, max-age=3600' });
@@ -56,9 +60,11 @@ module.exports = {
       return true;
     }
     if (p === 'nearby') {
-      const lat = Number(q.get('lat'));
-      const lon = Number(q.get('lon'));
+      const num = (k) => (q.get(k) === null || q.get(k).trim() === '' ? NaN : Number(q.get(k)));
+      const lat = num('lat');
+      const lon = num('lon');
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return json(res, 400, { error: 'lat and lon are required numbers' });
+      if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return json(res, 400, { error: 'lat must be within +-90 and lon within +-180 (lat first)' });
       const radius = Math.min(Math.max(Number(q.get('radius')) || 800, 50), 3000);
       const modes = (q.get('modes') || '').split(',').filter(Boolean);
       const { net } = load(dayTypeOf(q));
@@ -86,6 +92,15 @@ module.exports = {
       const r = loadShapes().routes.find((x) => x.mode === mode && x.name === name);
       if (!r) return json(res, 404, { error: 'unknown route' });
       return json(res, 200, { type: 'Feature', properties: { name: r.name, mode: r.mode }, geometry: { type: 'MultiLineString', coordinates: r.lines } });
+    }
+    if (p === 'tasks') {
+      try {
+        const body = fs.readFileSync(path.join(__dirname, 'tasks.json'), 'utf8');
+        res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+        return res.end(body);
+      } catch {
+        return json(res, 200, { updated: null, tasks: [] });
+      }
     }
     if (p === 'meta') {
       const out = {};

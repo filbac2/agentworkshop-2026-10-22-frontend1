@@ -11,3 +11,6 @@
 2026-10-22 10:22 HIRE: polygon-quality-reviewer (engine shape and size faults slip past unit tests, marlin hit a 29 MB answer)
 2026-10-22 10:22 HIRE: a11y-reviewer (touch-friendly and usable UI is a requirement, nobody checks accessibility)
 2026-10-22 10:22 HIRE: swedish-copy-reviewer (Swedish UI is a requirement, strings come from two teams)
+2026-10-22 10:33 DISSOLVE: release-smoke-tester (its job is now the scripts e2e.js and check.js, nobody called the agent)
+2026-10-22 10:33 REVIEW: evolution round, 13 agents left; next hire only if mareri tile goes live (tile-tester)
+2026-10-22 10:45 HIRE: sync-coordinator (13 agents and 5 teams, nobody tracked cross-team asks, faults and who owes what)
