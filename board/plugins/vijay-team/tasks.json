@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-22T11:23:00+02:00",
+  "updated": "2026-10-22T11:33:00+02:00",
   "tasks": [
     {
       "id": 1,
@@ -18,9 +18,9 @@
     {
       "id": 3,
       "title": "Check marlin /health days list (weekday only now) and saturday/sunday queries",
-      "owner": "engine-verifier",
-      "status": "open",
-      "source": "spore frontend2-7"
+      "owner": "marlin",
+      "status": "done",
+      "source": "#build 324 (PR 29 merged; /meta days = weekday, saturday, sunday)"
     },
     {
       "id": 4,

@@ -29,6 +29,24 @@ function loadRouteDays() {
   return routeDays;
 }
 
+const tripEnds = {};
+function loadDepartures(type) {
+  if (!tripEnds[type]) {
+    const c = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(DATA, `connections-${type}.json.gz`))));
+    const last = new Map();
+    for (let i = 0; i < c.from.length; i++) last.set(c.trip[i], c.to[i]);
+    tripEnds[type] = { c, last };
+  }
+  return tripEnds[type];
+}
+
+const hhmm = (s) => String(Math.floor(s / 3600) % 24).padStart(2, '0') + ':' + String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+
+function stockholmNowSec() {
+  const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
+  return Number(p.find((x) => x.type === 'hour').value) * 3600 + Number(p.find((x) => x.type === 'minute').value) * 60;
+}
+
 function load(type) {
   if (!cache[type]) {
     const gz = fs.readFileSync(path.join(DATA, `network-${type}.json.gz`));
@@ -94,6 +112,32 @@ module.exports = {
       });
       out.sort((a, b) => a.distM - b.distM);
       return json(res, 200, out.slice(0, 50));
+    }
+    if (p === 'departures') {
+      const type = dayTypeOf(q);
+      const { net } = load(type);
+      const key = (q.get('stop') || '').trim();
+      let idx = /^\d+$/.test(key) && Number(key) < net.stops.length ? Number(key) : net.stops.findIndex((s) => s.id === key);
+      if (!key || idx < 0) return json(res, 400, { error: 'stop must be a station index or id from /stops or /nearby' });
+      let from = stockholmNowSec();
+      if (q.get('time')) {
+        const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(q.get('time'));
+        if (!m) return json(res, 400, { error: 'time must be HH:MM (00:00-23:59)' });
+        from = Number(m[1]) * 3600 + Number(m[2]) * 60;
+      }
+      const limit = Math.min(Math.max(parseInt(q.get('limit'), 10) || 10, 1), 50);
+      const modes = (q.get('modes') || '').split(',').filter(Boolean);
+      const { c, last } = loadDepartures(type);
+      const out = [];
+      for (let i = c.offsets[idx]; i < c.offsets[idx + 1] && out.length < limit; i++) {
+        if (c.dep[i] < from) continue;
+        const r = c.routes[c.route[i]];
+        if (modes.length && !modes.includes(r.mode)) continue;
+        const end = last.get(c.trip[i]);
+        out.push({ dep: hhmm(c.dep[i]), depSec: c.dep[i], route: r.name, mode: r.mode, to: net.stops[end].name, toIndex: end });
+      }
+      const s = net.stops[idx];
+      return json(res, 200, { stop: { index: idx, id: s.id, name: s.name, modes: s.modes }, day: type, from: hhmm(from), departures: out });
     }
     if (p === 'routes') {
       const { routes } = loadShapes();

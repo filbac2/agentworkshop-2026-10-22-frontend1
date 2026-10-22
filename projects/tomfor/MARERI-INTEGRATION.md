@@ -101,6 +101,15 @@ prefers to edit i18n.js directly, copy them and drop the adapter's merge.
 | aria.language | en/sv | hard-coded "Language" | Language / Språk | same |
 | aria.sheetToggle | en/sv | hard-coded "Toggle settings" | Show or hide settings / Visa eller dölj inställningar | same |
 
+Walk-only mode (proposed, #build 272/307, not agreed yet): new keys the adapter merges now, unused until mareri builds it.
+
+| key | en | sv |
+|---|---|---|
+| mode.walk | Walk | Gång |
+| legendWalk | Walking only, along streets | Endast gång, längs gator |
+| walkOnly ({n} = minutes) | All transport types are off, so the map shows only how far you can walk in {n} min. | Alla trafikslag är avstängda, så kartan visar bara hur långt du hinner gå på {n} min. |
+| err.walkUnavailable | The walking area could not be calculated right now. Turn on at least one transport type, or try again in a minute. | Gångområdet kunde inte beräknas just nu. Slå på minst ett trafikslag, eller försök igen om en minut. |
+
 Keys we checked and left alone (already natural): hint, origin, startTime, maxTravel, maxWait,
 maxTransfers, walkDest, walkTransfer, modes, update, calculating, done, legend, minutes, mode.*,
 err.noModes, err.badTime, err.badNumber, err.timeout. Mode names match tomfor's exactly.

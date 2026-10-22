@@ -23,7 +23,12 @@
       'warn.fixture': 'Showing test data, so results are not real SL timetables yet.',
       'aria.map': 'Map',
       'aria.language': 'Language',
-      'aria.sheetToggle': 'Show or hide settings'
+      'aria.sheetToggle': 'Show or hide settings',
+      // Walk-only mode (proposed, #build 272): additive, unused until mareri renders it.
+      'mode.walk': 'Walk',
+      legendWalk: 'Walking only, along streets',
+      walkOnly: 'All transport types are off, so the map shows only how far you can walk in {n} min.',
+      'err.walkUnavailable': 'The walking area could not be calculated right now. Turn on at least one transport type, or try again in a minute.'
     },
     sv: {
       title: 'Restidskarta för Stockholm',
@@ -39,7 +44,11 @@
       'warn.fixture': 'Kartan visar testdata, så resultaten bygger ännu inte på riktiga SL-tidtabeller.',
       'aria.map': 'Karta',
       'aria.language': 'Språk',
-      'aria.sheetToggle': 'Visa eller dölj inställningar'
+      'aria.sheetToggle': 'Visa eller dölj inställningar',
+      'mode.walk': 'Gång',
+      legendWalk: 'Endast gång, längs gator',
+      walkOnly: 'Alla trafikslag är avstängda, så kartan visar bara hur långt du hinner gå på {n} min.',
+      'err.walkUnavailable': 'Gångområdet kunde inte beräknas just nu. Slå på minst ett trafikslag, eller försök igen om en minut.'
     }
   };
 

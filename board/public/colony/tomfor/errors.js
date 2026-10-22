@@ -18,6 +18,7 @@ const CODE_TO_KEY = {
   search_failed: 'search_failed',
   unavailable: 'unavailable',
   unreachable: 'unreachable',
+  walk_unavailable: 'walk_unavailable',
 };
 
 // Accepts: {error:{code}}, {error:'code'}, {code}, {status}, {name:'AbortError'|'TimeoutError'},

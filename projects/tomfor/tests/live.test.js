@@ -93,6 +93,19 @@ async function marlin() {
     check('coordinates are [lon,lat]', !c || (c[0] > 17 && c[0] < 19.5 && c[1] > 58.5 && c[1] < 60.5), short(c));
   }
 
+  // marlin PR 29: echoed startTime must carry the real Stockholm offset (was +01:59), weekend data preloaded.
+  check('startTime echo +02:00', j?.meta?.startTime === '2026-10-22T09:00:00+02:00', short(j?.meta?.startTime));
+  const echo = async (startTime) => (await call('POST', '/t/marlin/isochrone', { origin: { lat: 59.3326, lon: 18.0649 }, startTime, maxTravelMinutes: 30 }));
+  const z = await echo('2026-10-22T07:00:00Z');
+  check('startTime Z normalised to +02:00', z.json?.meta?.startTime === '2026-10-22T09:00:00+02:00', short(z.json?.meta?.startTime));
+  const sat = await echo('2026-10-24T10:00:00+02:00');
+  check('saturday day + offset', sat.json?.meta?.day === 'saturday' && sat.json.meta.startTime === '2026-10-24T10:00:00+02:00', short(sat.json?.meta));
+  check('saturday latency < 2000ms (no cold start)', sat.ms < 2000, sat.ms);
+  const sun = await echo('2026-10-25T10:00:00+01:00');
+  check('sunday after DST end: day + offset +01:00', sun.json?.meta?.day === 'sunday' && sun.json.meta.startTime === '2026-10-25T10:00:00+01:00', short(sun.json?.meta));
+  check('sunday latency < 2000ms (no cold start)', sun.ms < 2000, sun.ms);
+  console.log('INFO weekend latency ms: sat', sat.ms, 'sun', sun.ms);
+
   const bad = (o, extra = {}) => ({ origin: { lat: 59.3326, lon: 18.0649 }, ...o, ...extra });
   checkError('malformed JSON', await call('POST', '/t/marlin/isochrone', '{nope'), 400, 'bad_request');
   checkError('missing origin', await call('POST', '/t/marlin/isochrone', {}), 400, 'bad_request');

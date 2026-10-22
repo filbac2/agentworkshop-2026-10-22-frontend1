@@ -83,6 +83,19 @@ Example: `errorMessage('sv', {status: 422, error: 'nothing_reachable'}).text` gi
 
 `fetchJson(url, opts?, timeoutMs = 15000)` is a fetch wrapper that rejects with `{status, ...body}` on non-2xx and an AbortError on timeout, so `catch (e) { errorMessage(lang, e) }` just works.
 
+## Walk-only mode (proposed)
+
+Proposed by filbac (#build 272), not agreed yet; mareri calls it a separate follow-up (#build 307). Walk becomes a 7th
+mode chip; when every transit mode is off, the map shows the walking area from GET /t/mareri/walk in the same 5-minute
+bands and legend. Our side is ready and purely additive (nothing changes if nobody builds it):
+
+- strings.js (EN/SV): `mode.walk`, `legend.walkOnly`, `legend.walkOnly.note`, `result.walkOnly` ({max}),
+  `error.walk_unavailable`, `error.walk_unavailable.fix`.
+- errors.js: code `walk_unavailable` maps to key `walk_unavailable`.
+- mareri-adapter.js (mareri key names): `mode.walk`, `legendWalk`, `walkOnly` ({n}), `err.walkUnavailable`.
+
+Example: `t('sv', 'result.walkOnly', {max: 30})` gives `Alla trafikslag är avstängda, så kartan visar bara hur långt du hinner gå på 30 min.`
+
 ## search.js
 
 - `searchAddress(query, {lang, limit, signal})` resolves `[{label, lat, lon}]` (Nominatim, bounded to the Stockholm area, Sweden only).
