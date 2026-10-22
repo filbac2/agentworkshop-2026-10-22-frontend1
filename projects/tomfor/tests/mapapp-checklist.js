@@ -1,11 +1,11 @@
 // Static + live checklist for a map app tile against the PROJEKT.md requirements. No dependencies.
-// Run: node tests/mapapp-checklist.js /colony/filbac/ [/colony/mareri/ ...] [--base URL] [--out file.md]
+// Run: node tests/mapapp-checklist.js /colony/mareri/ [/colony/other/ ...] [--base URL] [--out file.md]
 // One tile gives a table with evidence; several tiles give a side-by-side table.
 const args = process.argv.slice(2);
 const opt = (name, def) => { const i = args.indexOf(name); if (i < 0) return def; const v = args[i + 1]; args.splice(i, 2); return v; };
 const BASE = opt('--base', 'https://frontend1.torget.bjarby.com');
 const OUT = opt('--out', null);
-const TILES = args.length ? args : ['/colony/filbac/'];
+const TILES = args.length ? args : ['/colony/mareri/'];
 const MODES = ['bus', 'metro', 'tram', 'train', 'commuter_rail', 'boat'];
 const ENGINE = '/t/marlin/isochrone';
 

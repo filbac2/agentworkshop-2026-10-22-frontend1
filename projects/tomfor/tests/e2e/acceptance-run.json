@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-22T08:57:38.091Z",
+  "at": "2026-10-22T09:07:52.590Z",
   "base": "https://frontend1.torget.bjarby.com",
   "app": "/colony/mareri/",
   "devices": {
@@ -13,6 +13,21 @@
           "Failed to load resource: the server responded with a status of 422 ()"
         ],
         "failed": [
+          "https://tile.openstreetmap.org/12/2254/1203.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2254/1202.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2253/1203.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2255/1203.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2254/1204.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2253/1202.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2255/1202.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2253/1204.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2255/1204.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2254/1201.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2254/1205.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2253/1201.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2255/1201.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2253/1205.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/12/2255/1205.png net::ERR_ABORTED",
           "https://frontend1.torget.bjarby.com/t/marlin/isochrone net::ERR_FAILED"
         ],
         "isoCalls": [
@@ -25,7 +40,7 @@
           422,
           200
         ],
-        "loadMs": 899
+        "loadMs": 1045
       },
       "errs": {
         "abort": {
@@ -65,7 +80,7 @@
           "layers": 0
         },
         "restrictiveWalk": {
-          "status": "Done in 0.0 s.",
+          "status": "Done in 0.2 s.",
           "isError": false,
           "inView": true,
           "layers": 2
@@ -114,7 +129,7 @@
           "lat": 59.33126316367361,
           "lon": 18.059463500976566
         },
-        "startTime": "2026-10-22T08:57:00.000Z",
+        "startTime": "2026-10-22T09:07:00.000Z",
         "maxTravelMinutes": 30,
         "maxWaitMinutes": 7,
         "maxTransfers": 3,
@@ -144,6 +159,13 @@
           "Failed to load resource: the server responded with a status of 422 ()"
         ],
         "failed": [
+          "https://tile.openstreetmap.org/11/1123/601.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/11/1123/602.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/11/1123/600.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/11/1123/603.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/11/1122/600.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/11/1121/601.png net::ERR_ABORTED",
+          "https://tile.openstreetmap.org/11/1121/603.png net::ERR_ABORTED",
           "https://frontend1.torget.bjarby.com/t/marlin/isochrone net::ERR_FAILED"
         ],
         "isoCalls": [
@@ -160,7 +182,7 @@
           422,
           200
         ],
-        "loadMs": 715
+        "loadMs": 1502
       },
       "errs": {
         "abort": {
@@ -248,7 +270,7 @@
           "lat": 59.33126316233755,
           "lon": 18.059463500976566
         },
-        "startTime": "2026-10-22T08:57:00.000Z",
+        "startTime": "2026-10-22T09:08:00.000Z",
         "maxTravelMinutes": 30,
         "maxWaitMinutes": 7,
         "maxTransfers": 3,
@@ -293,11 +315,11 @@
     "R3 start time default now": {
       "phone": {
         "status": "PASS",
-        "evidence": "datetime-local value 2026-10-22T10:57, 0.7 min from page load (browser TZ Europe/Stockholm)"
+        "evidence": "datetime-local value 2026-10-22T11:07, 0.9 min from page load (browser TZ Europe/Stockholm)"
       },
       "desktop": {
         "status": "PASS",
-        "evidence": "datetime-local value 2026-10-22T10:57, 1.0 min from page load (browser TZ Europe/Stockholm)"
+        "evidence": "datetime-local value 2026-10-22T11:08, 0.2 min from page load (browser TZ Europe/Stockholm)"
       }
     },
     "R4 max travel 5-120 step 5 default 30": {
@@ -343,11 +365,11 @@
     "R9 Update recalculates": {
       "phone": {
         "status": "PASS",
-        "evidence": "1st Update: 200, 7 band layers; changed to 15 min, no bus, walk 6/3 -> new POST maxTravelMinutes 15, modes metro+tram+train+commuter_rail+boat, walking {\"accessMinutes\":6,\"egressMinutes\":6,\"transferMinutes\":3} -> 200, 3 band layers"
+        "evidence": "1st Update: 200, 6 band layers; changed to 15 min, no bus, walk 6/3 -> new POST maxTravelMinutes 15, modes metro+tram+train+commuter_rail+boat, walking {\"accessMinutes\":6,\"egressMinutes\":6,\"transferMinutes\":3} -> 200, 3 band layers"
       },
       "desktop": {
         "status": "PASS",
-        "evidence": "1st Update: 200, 7 band layers; changed to 15 min, no bus, walk 6/3 -> new POST maxTravelMinutes 15, modes metro+tram+train+commuter_rail+boat, walking {\"accessMinutes\":6,\"egressMinutes\":6,\"transferMinutes\":3} -> 200, 3 band layers"
+        "evidence": "1st Update: 200, 6 band layers; changed to 15 min, no bus, walk 6/3 -> new POST maxTravelMinutes 15, modes metro+tram+train+commuter_rail+boat, walking {\"accessMinutes\":6,\"egressMinutes\":6,\"transferMinutes\":3} -> 200, 3 band layers"
       }
     },
     "R7 transport type filters": {
@@ -363,21 +385,21 @@
     "R10 5-min bands + legend": {
       "phone": {
         "status": "PASS",
-        "evidence": "30 min -> 7 overlay layers (6 bands + walk outline); legend 6 segments, 6 distinct colours, per-band ranges only as title tooltips (0–5 min, 5–10 min, 10–15 min, 15–20 min, 20–25 min, 25–30 min), visible scale 0/15/30; legend in view"
+        "evidence": "30 min -> 6 overlay layers (6 bands); legend 6 segments, 6 distinct colours, per-band ranges only as title tooltips (0–5 min, 5–10 min, 10–15 min, 15–20 min, 20–25 min, 25–30 min), visible scale 0/15/30; legend in view"
       },
       "desktop": {
         "status": "PARTIAL",
-        "evidence": "30 min -> 7 overlay layers (6 bands + walk outline); legend 6 segments, 6 distinct colours, per-band ranges only as title tooltips (0–5 min, 5–10 min, 10–15 min, 15–20 min, 20–25 min, 25–30 min), visible scale 0/15/30; legend NOT in view without scrolling the panel (top 838 px, viewport 800)"
+        "evidence": "30 min -> 6 overlay layers (6 bands); legend 6 segments, 6 distinct colours, per-band ranges only as title tooltips (0–5 min, 5–10 min, 10–15 min, 15–20 min, 20–25 min, 25–30 min), visible scale 0/15/30; legend NOT in view without scrolling the panel (top 838 px, viewport 800)"
       }
     },
     "R11 render within a couple of seconds": {
       "phone": {
         "status": "PASS",
-        "evidence": "click->overlay at 30 min: 100 ms; status line \"Done in 0.0 s.\""
+        "evidence": "click->overlay at 30 min: 200 ms; status line \"Done in 0.2 s.\""
       },
       "desktop": {
         "status": "PASS",
-        "evidence": "click->overlay at 30 min: 78 / 68 / 81 ms (median 78); 60 min: 111 ms, 7 bands; status line \"Done in 0.0 s.\""
+        "evidence": "click->overlay at 30 min: 786 / 325 / 212 ms (median 325); 60 min: 421 ms, 7 bands; status line \"Done in 0.7 s.\""
       }
     },
     "R15 English and Swedish": {
@@ -413,7 +435,7 @@
     "R16c error: too restrictive": {
       "phone": {
         "status": "PARTIAL",
-        "evidence": "5 min, wait 0, transfers 0, walk 0/0, boat only (real engine): \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\"; same with walk 10/5: \"Done in 0.0 s.\" (not styled as error), 2 old band layers still on map (walk-only area drawn, no hint); client checks: all modes off \"Select at least one transport type.\", 2 old band layers still on map, max wait 999 \"Check the numbers: Max wait (min) is out of range.\", 2 old band layers still on map"
+        "evidence": "5 min, wait 0, transfers 0, walk 0/0, boat only (real engine): \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\"; same with walk 10/5: \"Done in 0.2 s.\" (not styled as error), 2 old band layers still on map (walk-only area drawn, no hint); client checks: all modes off \"Select at least one transport type.\", 2 old band layers still on map, max wait 999 \"Check the numbers: Max wait (min) is out of range.\", 2 old band layers still on map"
       },
       "desktop": {
         "status": "PARTIAL",
@@ -423,11 +445,11 @@
     "R12 Trafiklab cached/preprocessed": {
       "phone": {
         "status": "PASS",
-        "evidence": "engine meta: source gtfs, dataVersion sl-gtfs-20261103, computedMs 16 ; hosts the browser contacted: frontend1.torget.bjarby.com, unpkg.com, tile.openstreetmap.org"
+        "evidence": "engine meta: source gtfs, dataVersion sl-gtfs-20261103, computedMs 47 ; hosts the browser contacted: frontend1.torget.bjarby.com, unpkg.com, tile.openstreetmap.org"
       },
       "desktop": {
         "status": "PASS",
-        "evidence": "engine meta: source gtfs, dataVersion sl-gtfs-20261103, computedMs 16 ; hosts the browser contacted: frontend1.torget.bjarby.com, unpkg.com, tile.openstreetmap.org"
+        "evidence": "engine meta: source gtfs, dataVersion sl-gtfs-20261103, computedMs 25 ; hosts the browser contacted: frontend1.torget.bjarby.com, unpkg.com, tile.openstreetmap.org"
       }
     },
     "R13 responsive / touch": {

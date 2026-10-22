@@ -1,4 +1,4 @@
-// Live contract checks for vijay-team and marlin. Run: node tests/live.test.js [baseUrl]
+// Live contract checks for vijay-team, marlin and mareri. Run: node tests/live.test.js [baseUrl]
 const BASE = process.argv[2] || 'https://frontend1.torget.bjarby.com';
 const MODES = ['bus', 'metro', 'tram', 'train', 'commuter_rail', 'boat'];
 let fails = 0;
@@ -113,8 +113,41 @@ async function marlin() {
   check('marlin /modes', md.status === 200 && Array.isArray(md.json?.modes) && md.json.modes.every((m) => MODES.includes(m)), short(md.json ?? md.text));
 }
 
+// mareri PR 26: POST /t/mareri/isochrone, same request/response as marlin plus street-walking meta.
+async function mareri() {
+  const P = '/t/mareri/isochrone';
+  const body = (lat, lon, extra = {}) => ({ origin: { lat, lon }, startTime: '2026-10-22T09:00:00+02:00', maxTravelMinutes: 30, ...extra });
+  const ok = await call('POST', P, body(59.3313, 18.0593));
+  if (ok.status === 404) { console.log('INFO mareri /isochrone not live yet (404), skipped'); return; }
+  check('mareri central 200', ok.status === 200, `${ok.status} ${short(ok.json ?? ok.text)}`);
+  console.log('INFO mareri central latency ms:', ok.ms);
+  check('mareri latency < 5000ms', ok.ms < 5000, ok.ms);
+  const j = ok.json;
+  if (ok.status === 200 && j) {
+    const f = j.features || [];
+    check('mareri FeatureCollection, 6 bands', j.type === 'FeatureCollection' && f.length === 6, `${j.type} ${f.length}`);
+    check('mareri marlin meta fields', j.meta?.bandMinutes === 5 && j.meta.maxTravelMinutes === 30 && j.meta.cumulativeBands === true && 'stopsReached' in j.meta, short(j.meta));
+    check('mareri bands outermost first', f.every((x, i) => x.properties.toMinutes === 30 - i * 5 && x.properties.fromMinutes === 25 - i * 5 && x.properties.bandIndex === 6 - i), short(f.map((x) => [x.properties.fromMinutes, x.properties.toMinutes])));
+    check('mareri geometry MultiPolygon [lon,lat]', f.every((x) => x.geometry?.type === 'MultiPolygon') && (() => { const c = f[0]?.geometry.coordinates[0]?.[0]?.[0]; return !c || (c[0] > 17 && c[0] < 19.5 && c[1] > 58.5 && c[1] < 60.5); })(), short(f[0]?.geometry?.type));
+    check('mareri meta.walkingModel street', j.meta?.walkingModel === 'street', short(j.meta?.walkingModel));
+    const w = j.meta?.walking;
+    check('mareri meta.walking shape', w && typeof w.streetStops === 'number' && typeof w.straightLineStops === 'number' && typeof w.pinOnStreet === 'boolean' && 'cellMetres' in w, short(w));
+    check('mareri central pin on street', w?.pinOnStreet === true, short(w));
+    check('mareri attribution', /OpenStreetMap/i.test(JSON.stringify(j.meta?.attribution ?? '')), short(j.meta?.attribution));
+  }
+  // Södertälje: outside the street bbox (lat 59.22-59.44, lon 17.90-18.22), should fall back to straight-line walking.
+  const out = await call('POST', P, body(59.1955, 17.6253));
+  check('mareri outside bbox 200', out.status === 200, `${out.status} ${short(out.json ?? out.text)}`);
+  if (out.status === 200) {
+    check('mareri outside bbox: pin not on street (fallback)', out.json?.meta?.walking?.pinOnStreet === false, short(out.json?.meta?.walking));
+    check('mareri outside bbox: has bands', out.json?.features?.length === 6, out.json?.features?.length);
+  }
+  checkError('mareri unknown mode', await call('POST', P, body(59.3313, 18.0593, { modes: ['hovercraft'] })), 400, 'unknown_mode');
+  checkError('mareri open sea', await call('POST', P, { origin: { lat: 59.2, lon: 19.2 } }), 422, 'no_stops_near_origin');
+}
+
 (async () => {
-  for (const [name, fn] of [['vijay-team', vijay], ['marlin', marlin]]) {
+  for (const [name, fn] of [['vijay-team', vijay], ['marlin', marlin], ['mareri', mareri]]) {
     console.log(`\n== ${name} ==`);
     try { await fn(); } catch (e) { fails++; console.log('FAIL', name, 'threw', e.message); }
   }

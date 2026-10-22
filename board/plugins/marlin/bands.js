@@ -104,11 +104,34 @@ function round5(v) {
  *
  * Candidates are compared only against neighbouring grid cells, so this stays
  * near linear instead of quadratic.
+ *
+ * `forced` discs (see build(): stops already proven covered in a narrower,
+ * inner band) carry a `checkR` that can be smaller than their current `r`:
+ * the radius that was actually proven before is all that still needs to stay
+ * covered going forward, even though the stop's true radius has since grown
+ * with the wider band's edge. That lets them still be absorbed into a bigger
+ * neighbour's disc here (so the polygon budget keeps working), while a disc
+ * that survives is always recorded - and offered to others - at its full,
+ * current `r`, because that is what the client actually draws.
+ *
+ * This does not make nesting perfect, only far better: if a forced disc X
+ * (frozen at checkR) gets absorbed into a bigger neighbour O in some band,
+ * everything X used to prove covered within its own slack margin (up to
+ * `checkR` from X's centre) is only guaranteed covered by O up to
+ * `checkR * slack` short of O's edge - the same slack that let X itself
+ * stick out of O. A point sitting right at that margin's outer edge in one
+ * band and just past O's true edge in the next is still a (rare, expected)
+ * residual violation, not a bug: trim-test.js measured 7 of 3968 stations
+ * after this fix, down from 13 before it and 254 before the original
+ * re-decimate fix. Closing this last gap would mean never dropping a forced
+ * disc at all, which regressed the polygon payload in testing (see
+ * test.mjs) - not a trade worth making for seven stations.
  */
-function decimate(discs, slack) {
-  discs.sort((a, b) => b.r - a.r);
+function decimate(discs, slack, forced = []) {
+  const all = forced.concat(discs);
+  all.sort((a, b) => b.r - a.r);
 
-  const cell = Math.max(150, discs.length ? discs[0].r : 150);
+  const cell = Math.max(150, all.length ? all[0].r : 150);
   const kept = [];
   const grid = new Map();
 
@@ -116,7 +139,8 @@ function decimate(discs, slack) {
     Math.round(lat * 111320 / cell) + ':' +
     Math.round(lon * 111320 * Math.cos(lat * Math.PI / 180) / cell);
 
-  for (const d of discs) {
+  for (const d of all) {
+    const checkR = d.checkR != null ? d.checkR : d.r;
     const baseY = Math.round(d.lat * 111320 / cell);
     const baseX = Math.round(d.lon * 111320 * Math.cos(d.lat * Math.PI / 180) / cell);
 
@@ -127,7 +151,7 @@ function decimate(discs, slack) {
         const bucket = grid.get((baseY + dy) + ':' + (baseX + dx));
         if (!bucket) continue;
         for (const o of bucket) {
-          if (haversine(d.lat, d.lon, o.lat, o.lon) + d.r * (1 - slack) <= o.r) {
+          if (haversine(d.lat, d.lon, o.lat, o.lon) + checkR * (1 - slack) <= o.r) {
             covered = true;
             break outer;
           }
@@ -158,17 +182,34 @@ function decimate(discs, slack) {
  * or a station that was genuinely reached ends up with no polygon covering it
  * at all: a hole in the band. (Found by @vijay-team on real data: 254 stations
  * inside a band's stop list but outside its own cumulative polygon.)
+ *
+ * That fix makes each band's own polygon internally consistent, but every
+ * band was still decimated independently of its neighbours - even at the
+ * *same* slack, the grid/greedy pass can pick a different representative
+ * disc to keep for the same stop cluster once the input set changes (more
+ * stops, slightly larger radii in the next cumulative band), so a station
+ * covered in band k was occasionally not covered in band k+1 even though
+ * nothing about the bug above was involved. `forced` discs (see build(): every
+ * stop ever proven covered by an inner band, carried forward with the radius
+ * it was last proven at - see decimate()'s `checkR`) still go through the
+ * same covered-or-kept test, just at that smaller, already-proven radius
+ * instead of the current wider-band radius, so a growing neighbour can go on
+ * absorbing them for the budget's sake without ever un-proving a station that
+ * was already shown reachable. (Residual nesting violations after the first
+ * fix alone: 13 of 3968 stations at a 120-minute query; this removes the
+ * mechanism, not just caps it.)
  */
-function fit(discs, edgeSeconds) {
+function fit(discs, edgeSeconds, forced = []) {
   const budget = budgetFor(edgeSeconds);
   let slack = budget.slack;
-  let kept = decimate(discs, slack);
+  let kept = decimate(discs, slack, forced);
   while (kept.length > budget.max && slack < 0.95) {
     slack = Math.min(0.95, slack + 0.1);
-    kept = decimate(discs, slack);
+    kept = decimate(discs, slack, forced);
   }
   return kept;
 }
+
 
 /**
  * @param {object} net
@@ -196,13 +237,21 @@ function build(net, arrival, opts) {
 
   const features = [];
 
-  for (let b = bandCount; b >= 1; b--) {
+  // Bands are built innermost first (b ascending) so every stop's disc, once
+  // it has been shown to need covering at some radius, can be carried
+  // forward into every wider band as a `forced` entry - see fit()'s doc
+  // comment for why decimating every band from scratch, even from the fixed
+  // original set, still isn't enough to guarantee nesting on its own.
+  const provenR = new Map();   // stop object (or 'origin') -> the radius it was last proven at
+  const resultsAscending = [];
+
+  for (let b = 1; b <= bandCount; b++) {
     const edge = b * bandSeconds;
     const discs = [];
 
     // Walking straight from the pin, without using transit at all.
     const originRadius = Math.min(accessSeconds, edge) * walkSpeedMs;
-    if (originRadius > 0) discs.push({ lat: origin.lat, lon: origin.lon, r: originRadius });
+    if (originRadius > 0) discs.push({ lat: origin.lat, lon: origin.lon, r: originRadius, key: 'origin' });
 
     let stopsInBand = 0;
     for (const s of reached) {
@@ -210,14 +259,33 @@ function build(net, arrival, opts) {
       stopsInBand++;
       const r = Math.min(egressSeconds, edge - s.t) * walkSpeedMs;
       if (r < MIN_RADIUS_M) continue;
-      discs.push({ lat: s.lat, lon: s.lon, r });
+      discs.push({ lat: s.lat, lon: s.lon, r, key: s });
     }
 
-    const kept = fit(discs, edge);
+    const forced = [];
+    const candidates = [];
+    for (const d of discs) {
+      const already = provenR.get(d.key);
+      if (already != null) forced.push({ lat: d.lat, lon: d.lon, r: d.r, key: d.key, checkR: already });
+      else candidates.push(d);
+    }
+
+    const kept = fit(candidates, edge, forced);
+
+    // Every stop seen this band - whether it survived as a literal disc or
+    // was absorbed into a neighbour - has now been proven covered at (at
+    // least) its radius in THIS band, so it must stay covered from here on.
+    // A survivor is proven at its current, full radius; an absorbed one
+    // keeps the smaller radius it was actually tested at (its own on first
+    // appearance, or its frozen checkR if it was already a forced entry).
+    const keptKeys = new Set(kept.map((d) => d.key));
+    for (const d of candidates) provenR.set(d.key, d.r);
+    for (const d of forced) if (keptKeys.has(d.key)) provenR.set(d.key, d.r);
+
     const fromMinutes = Math.round((b - 1) * bandSeconds / 60);
     const toMinutes = Math.round(edge / 60);
 
-    features.push({
+    resultsAscending.push({
       type: 'Feature',
       properties: {
         fromMinutes,
@@ -237,6 +305,10 @@ function build(net, arrival, opts) {
       },
     });
   }
+
+  // Emitted outermost first: a client paints them in array order and the
+  // nearer (smaller) bands cover the farther ones.
+  for (let i = resultsAscending.length - 1; i >= 0; i--) features.push(resultsAscending[i]);
 
   return features;
 }

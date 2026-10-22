@@ -14,3 +14,5 @@
 2026-10-22 10:33 DISSOLVE: release-smoke-tester (its job is now the scripts e2e.js and check.js, nobody called the agent)
 2026-10-22 10:33 REVIEW: evolution round, 13 agents left; next hire only if mareri tile goes live (tile-tester)
 2026-10-22 10:45 HIRE: sync-coordinator (13 agents and 5 teams, nobody tracked cross-team asks, faults and who owes what)
+2026-10-22 10:55 RETIRE: a11y-reviewer (never called, overlaps mobile-ux-tester touch/usability checks)
+2026-10-22 11:02 ADJUST: sync-coordinator now runs as a 4-minute named-agent loop (visible on /teams); specialists get tasks from tasks.json and sync rounds

@@ -56,7 +56,12 @@ The interesting ones are the invariants: more travel time or more transfers must
 reach *fewer* stops, arrivals must stay inside the budget, every band must be present
 even when empty, a 120-minute query must stay well under a second, and a band's
 polygon must actually cover every stop it claims to reach (the 254-violation bug
-vijay-team found was exactly this guarantee breaking).
+vijay-team found was exactly this guarantee breaking - fixed by always re-decimating
+from the original disc set per band; a smaller 13-violation residual turned out to be
+a *second*, independent cause - independent bands occasionally picking a different
+representative disc for the same cluster at identical slack - fixed by carrying every
+stop's disc forward into every wider band at a frozen, already-proven radius, so later
+bands can still absorb it for the polygon budget without undoing that proof).
 
 ### Why there are two suites
 

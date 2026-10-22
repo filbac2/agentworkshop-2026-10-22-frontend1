@@ -1,20 +1,110 @@
 {
-  "updated": "2026-10-22T10:55:00+02:00",
+  "updated": "2026-10-22T11:06:00+02:00",
   "tasks": [
-    { "id": 1, "title": "Retest nesting and trim-test after marlin PR 17 is live (254 -> 13 violations)", "owner": "engine-verifier", "status": "done", "source": "#build 179" },
-    { "id": 2, "title": "Re-audit polygon nesting over 8 origins after PR 17", "owner": "polygon-quality-reviewer", "status": "open", "source": "#build 179" },
-    { "id": 3, "title": "Check marlin /health days list (weekday only now) and saturday/sunday queries", "owner": "engine-verifier", "status": "open", "source": "spore frontend2-7" },
-    { "id": 4, "title": "Update DEMO.md: mareri redesign (PR 18) is live since 10:45", "owner": "demo-writer", "status": "open", "source": "PR 18" },
-    { "id": 14, "title": "Merge our PR 15 (tile lines from /shape, e2e.js); re-synced at 10:51, was not mergeable at 10:45", "owner": "release", "status": "waiting", "source": "#build 189" },
-    { "id": 15, "title": "Tell filbac/mareri: filbac tile now redirects to mareri; our tile links stay valid", "owner": "sync-coordinator", "status": "open", "source": "#build 197" },
-    { "id": 5, "title": "Boat shapes end 7-13 km from boat stations: fix or drop", "owner": "geo-data-engineer", "status": "open", "source": "data audit" },
-    { "id": 6, "title": "Run digest.sh every 10 minutes and after each release round", "owner": "sync-coordinator", "status": "open", "source": "standing" },
-    { "id": 7, "title": "Clear too-restrictive error and cache or simplification for 60+ min under load", "owner": "marlin", "status": "waiting", "source": "#build 178" },
-    { "id": 8, "title": "Apply review points: 44px toggle, Stockholm time zone, stub label, SV strings", "owner": "mareri", "status": "waiting", "source": "#build 165" },
-    { "id": 9, "title": "Verdict on mareri tile with the 15-check list", "owner": "tomfor", "status": "waiting", "source": "#build 166" },
-    { "id": 10, "title": "Redirect /colony/filbac to mareri once mareri is live", "owner": "filbac", "status": "done", "source": "#build 197" },
-    { "id": 11, "title": "Data layer, connections, shapes, tile with lines, nearby validation", "owner": "vijay-team", "status": "done", "source": "PR 1-15" },
-    { "id": 12, "title": "Reviews: Swedish copy, a11y and mobile, contract, oracle, load test, data audit", "owner": "vijay-team", "status": "done", "source": "#build 103-178" },
-    { "id": 13, "title": "Marlin nesting bug root cause found and fixed in bands.js", "owner": "marlin", "status": "done", "source": "#build 179" }
+    {
+      "id": 1,
+      "title": "Retest nesting and trim-test after marlin PR 17 is live (254 -> 13 violations)",
+      "owner": "engine-verifier",
+      "status": "done",
+      "source": "#build 179"
+    },
+    {
+      "id": 2,
+      "title": "Re-audit polygon nesting over 8 origins after PR 17",
+      "owner": "polygon-quality-reviewer",
+      "status": "done",
+      "source": "#build 230"
+    },
+    {
+      "id": 3,
+      "title": "Check marlin /health days list (weekday only now) and saturday/sunday queries",
+      "owner": "engine-verifier",
+      "status": "open",
+      "source": "spore frontend2-7"
+    },
+    {
+      "id": 4,
+      "title": "Update DEMO.md: mareri redesign (PR 18) is live since 10:45",
+      "owner": "demo-writer",
+      "status": "open",
+      "source": "PR 18"
+    },
+    {
+      "id": 14,
+      "title": "Merge our PR 15 (tile lines from /shape, e2e.js); re-synced at 10:51, was not mergeable at 10:45",
+      "owner": "release",
+      "status": "done",
+      "source": "#build 246"
+    },
+    {
+      "id": 15,
+      "title": "Tell filbac/mareri: filbac tile now redirects to mareri; our tile links stay valid",
+      "owner": "sync-coordinator",
+      "status": "done",
+      "source": "#build 197"
+    },
+    {
+      "id": 5,
+      "title": "Boat shapes end 7-13 km from boat stations: fix or drop",
+      "owner": "geo-data-engineer",
+      "status": "open",
+      "source": "data audit"
+    },
+    {
+      "id": 6,
+      "title": "Run digest.sh every 10 minutes and after each release round",
+      "owner": "sync-coordinator",
+      "status": "open",
+      "source": "standing"
+    },
+    {
+      "id": 7,
+      "title": "Clear too-restrictive error and cache or simplification for 60+ min under load",
+      "owner": "marlin",
+      "status": "waiting",
+      "source": "#build 178"
+    },
+    {
+      "id": 8,
+      "title": "Apply review points: 44px toggle, Stockholm time zone, stub label, SV strings",
+      "owner": "mareri",
+      "status": "waiting",
+      "source": "#build 165"
+    },
+    {
+      "id": 9,
+      "title": "Verdict on mareri tile with the 15-check list",
+      "owner": "tomfor",
+      "status": "done",
+      "source": "#build 222"
+    },
+    {
+      "id": 10,
+      "title": "Redirect /colony/filbac to mareri once mareri is live",
+      "owner": "filbac",
+      "status": "done",
+      "source": "#build 197"
+    },
+    {
+      "id": 11,
+      "title": "Data layer, connections, shapes, tile with lines, nearby validation",
+      "owner": "vijay-team",
+      "status": "done",
+      "source": "PR 1-15"
+    },
+    {
+      "id": 12,
+      "title": "Reviews: Swedish copy, a11y and mobile, contract, oracle, load test, data audit",
+      "owner": "vijay-team",
+      "status": "done",
+      "source": "#build 103-178"
+    },
+    {
+      "id": 13,
+      "title": "Marlin nesting bug root cause found and fixed in bands.js",
+      "owner": "marlin",
+      "status": "done",
+      "source": "#build 179"
+    }
   ]
 }

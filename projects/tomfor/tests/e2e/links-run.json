@@ -1,0 +1,253 @@
+{
+  "runner": "tomfor-acceptance",
+  "format": "tomfor-acceptance <PASS|FAIL> <link-id> <viewport> <ms> <note>",
+  "base": "https://frontend1.torget.bjarby.com",
+  "finishedAt": "2026-10-22T09:17:41.570Z",
+  "pass": 10,
+  "fail": 0,
+  "urlStateSupported": false,
+  "results": [
+    {
+      "id": "weekday-30",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=bus,metro,tram,train,commuter_rail,boat&lang=en&time=2026-10-22T09:00",
+      "viewport": "phone",
+      "expect": "overlay",
+      "loadMs": 1188,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 122,
+      "layers": 6,
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "overlay 6 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    },
+    {
+      "id": "weekday-30",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=bus,metro,tram,train,commuter_rail,boat&lang=en&time=2026-10-22T09:00",
+      "viewport": "desktop",
+      "expect": "overlay",
+      "loadMs": 1455,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 140,
+      "layers": 6,
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "overlay 6 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    },
+    {
+      "id": "weekend-30",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=metro,bus&lang=en&time=2026-10-24T10:00",
+      "viewport": "phone",
+      "expect": "overlay",
+      "loadMs": 1004,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 105,
+      "layers": 6,
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "overlay 6 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    },
+    {
+      "id": "weekend-30",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=metro,bus&lang=en&time=2026-10-24T10:00",
+      "viewport": "desktop",
+      "expect": "overlay",
+      "loadMs": 1553,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 134,
+      "layers": 7,
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "overlay 7 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    },
+    {
+      "id": "long-120",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=120&modes=bus,metro,tram,train,commuter_rail,boat&lang=en&time=2026-10-22T09:00",
+      "viewport": "phone",
+      "expect": "overlay",
+      "loadMs": 944,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 1898,
+      "layers": 25,
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "overlay 25 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    },
+    {
+      "id": "long-120",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=120&modes=bus,metro,tram,train,commuter_rail,boat&lang=en&time=2026-10-22T09:00",
+      "viewport": "desktop",
+      "expect": "overlay",
+      "loadMs": 1324,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 2413,
+      "layers": 25,
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "overlay 25 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    },
+    {
+      "id": "open-water",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.2&lon=19.2&min=30&lang=en&time=2026-10-22T09:00",
+      "viewport": "phone",
+      "expect": "error",
+      "loadMs": 921,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "pin"
+      ],
+      "httpStatus": 422,
+      "got": "error",
+      "ms": 112,
+      "error": "No stop within walking distance of the pin. Move the pin or allow a longer walk.",
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "error \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\"; http 422; url-state not supported, drove UI lang+min+time+pin; 1 console error(s)",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 422 ()"
+      ]
+    },
+    {
+      "id": "open-water",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.2&lon=19.2&min=30&lang=en&time=2026-10-22T09:00",
+      "viewport": "desktop",
+      "expect": "error",
+      "loadMs": 1187,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "pin"
+      ],
+      "httpStatus": 422,
+      "got": "error",
+      "ms": 91,
+      "error": "No stop within walking distance of the pin. Move the pin or allow a longer walk.",
+      "updateLabel": "Update",
+      "status": "PASS",
+      "note": "error \"No stop within walking distance of the pin. Move the pin or allow a longer walk.\"; http 422; url-state not supported, drove UI lang+min+time+pin; 1 console error(s)",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 422 ()"
+      ]
+    },
+    {
+      "id": "lang-sv",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=metro&lang=sv&time=2026-10-22T09:00",
+      "viewport": "phone",
+      "expect": "overlay",
+      "loadMs": 1723,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 314,
+      "layers": 6,
+      "updateLabel": "Uppdatera",
+      "status": "PASS",
+      "note": "overlay 6 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    },
+    {
+      "id": "lang-sv",
+      "url": "https://frontend1.torget.bjarby.com/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=metro&lang=sv&time=2026-10-22T09:00",
+      "viewport": "desktop",
+      "expect": "overlay",
+      "loadMs": 2353,
+      "urlStateSeen": [],
+      "urlState": false,
+      "drove": [
+        "lang",
+        "min",
+        "time",
+        "modes",
+        "pin"
+      ],
+      "httpStatus": 200,
+      "got": "overlay",
+      "ms": 347,
+      "layers": 6,
+      "updateLabel": "Uppdatera",
+      "status": "PASS",
+      "note": "overlay 6 layers; http 200; url-state not supported, drove UI lang+min+time+modes+pin",
+      "consoleErrors": []
+    }
+  ]
+}

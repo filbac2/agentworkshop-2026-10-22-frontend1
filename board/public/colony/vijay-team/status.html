@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vijay-team: group app health</title>
+<style>
+  body { margin:0; font:14px system-ui,sans-serif; background:#f5f7fa; color:#1b2530; }
+  header { padding:10px 14px; background:#fff; border-bottom:1px solid #e1e6ec; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  h1 { font-size:16px; margin:0; flex:1; }
+  a { color:#0a6fd6; text-decoration:none; }
+  main { padding:12px; max-width:900px; margin:0 auto; }
+  table { width:100%; border-collapse:collapse; background:#fff; border:1px solid #e1e6ec; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #e1e6ec; overflow-wrap:anywhere; }
+  th { font-size:12px; color:#5b6874; }
+  .ok { color:#127a3d; font-weight:600; }
+  .bad { color:#b3261e; font-weight:600; }
+  .sum { margin:0 0 10px; font-size:15px; }
+  small { color:#5b6874; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Group app health</h1>
+  <a href="/colony/vijay-team/">Data explorer</a>
+  <a href="/colony/vijay-team/sync.html">Team sync</a>
+</header>
+<main>
+  <p class="sum" id="sum">Running checks...</p>
+  <table>
+    <thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p><small id="stamp"></small> <small>Refreshes every 30 s. Runs in your browser against the live modules.</small></p>
+</main>
+<script>
+const BASE = { origin: { lat: 59.3303, lon: 18.0586 }, startTime: null, maxTravelMinutes: 30, maxWaitMinutes: 7,
+  maxTransfers: 3, modes: ['bus', 'metro', 'tram', 'train', 'commuter_rail', 'boat'],
+  walking: { accessMinutes: 10, egressMinutes: 10, transferMinutes: 5 }, bandMinutes: 5 };
+
+async function timed(fn) {
+  const t0 = performance.now();
+  try { const d = await fn(); return { ok: d.ok !== false, detail: d.detail || '', ms: Math.round(performance.now() - t0) }; }
+  catch (e) { return { ok: false, detail: String(e.message || e), ms: Math.round(performance.now() - t0) }; }
+}
+const page = (url) => async () => { const r = await fetch(url); return { ok: r.status === 200, detail: 'HTTP ' + r.status }; };
+const iso = (over, limit) => async () => {
+  const r = await fetch('/t/marlin/isochrone', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...BASE, ...over }) });
+  const b = await r.json().catch(() => ({}));
+  return { ok: r.status === 200 && (b.features || []).length > 0, detail: 'HTTP ' + r.status + ', ' + (b.features || []).length + ' bands' };
+};
+const isoErr = (over, status) => async () => {
+  const r = await fetch('/t/marlin/isochrone', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...BASE, ...over }) });
+  const b = await r.json().catch(() => ({}));
+  return { ok: r.status === status && !!b.message && !!b.message_sv, detail: 'HTTP ' + r.status + (b.message_sv ? ', message_sv present' : ', message_sv MISSING') };
+};
+
+const CHECKS = [
+  ['Data: stations and meta', async () => { const m = await (await fetch('/t/vijay-team/meta')).json(); return { ok: !!m && (m.stops || m.stations || Object.keys(m).length) > 0, detail: 'meta ' + Object.keys(m).slice(0, 4).join(', ') }; }],
+  ['Data: nearby stops', async () => { const r = await fetch('/t/vijay-team/nearby?lat=59.33&lon=18.06'); return { ok: r.status === 200, detail: 'HTTP ' + r.status }; }],
+  ['Data: nearby rejects bad coordinates', async () => { const r = await fetch('/t/vijay-team/nearby?lat=abc&lon=18'); return { ok: r.status === 400, detail: 'HTTP ' + r.status }; }],
+  ['Engine: health', async () => { const h = await (await fetch('/t/marlin/health')).json(); const days = h.days || []; return { ok: h.ok && h.networkLoaded && days.includes('weekday'), detail: (h.stops || '?') + ' stops, days loaded: ' + days.join('/') }; }],
+  ['Engine: 30 min weekday', iso({})],
+  ['Engine: Saturday', iso({ startTime: '2026-11-07T10:00:00+01:00' })],
+  ['Engine: Sunday', iso({ startTime: '2026-11-08T10:00:00+01:00' })],
+  ['Engine: 120 min (under 3 s)', async () => { const t0 = performance.now(); const d = await iso({ maxTravelMinutes: 120 })(); const ms = performance.now() - t0; return { ok: d.ok && ms < 3000, detail: d.detail + ', ' + Math.round(ms) + ' ms' }; }],
+  ['Engine: missing origin gives 400 with SV text', isoErr({ origin: null }, 400)],
+  ['Engine: pin in the sea gives 422 with SV text', isoErr({ origin: { lat: 59.0, lon: 19.5 } }, 422)],
+  ['Tile: mareri (group app)', page('/colony/mareri/')],
+  ['Tile: tomfor', page('/colony/tomfor/')],
+  ['Tile: vijay-team lines-layer.js', page('/colony/vijay-team/lines-layer.js')],
+  ['Tile: mareri has group-app meta tag', async () => { const t = await (await fetch('/colony/mareri/')).text(); return { ok: /name=["']colony["']\s+content=["']group-app["']/.test(t), detail: 'meta colony=group-app' }; }],
+];
+
+const rows = document.getElementById('rows');
+function td(text, cls) { const c = document.createElement('td'); c.textContent = text; if (cls) c.className = cls; return c; }
+
+async function runAll() {
+  const results = [];
+  for (const [name, fn] of CHECKS) results.push([name, await timed(fn)]);
+  rows.replaceChildren();
+  let pass = 0;
+  for (const [name, r] of results) {
+    if (r.ok) pass++;
+    const tr = document.createElement('tr');
+    tr.append(td(name), td(r.ok ? 'PASS' : 'FAIL', r.ok ? 'ok' : 'bad'), td(r.detail + ' (' + r.ms + ' ms)'));
+    rows.append(tr);
+  }
+  const sum = document.getElementById('sum');
+  sum.textContent = pass + ' of ' + results.length + ' checks pass';
+  sum.className = 'sum ' + (pass === results.length ? 'ok' : 'bad');
+  document.getElementById('stamp').textContent = 'Last run ' + new Date().toLocaleTimeString() + '. ';
+}
+async function loop() { await runAll(); setTimeout(loop, 30000); }
+loop();
+</script>
+</body>
+</html>

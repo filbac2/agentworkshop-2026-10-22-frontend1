@@ -73,6 +73,23 @@ export const strings = {
     'error.unreachable.fix': 'Check your connection and try again.',
     'error.unknown': 'An unexpected error occurred.',
     'error.unknown.fix': 'Reload the page and try again.',
+    'docs.intro': 'Team tomfor makes plain-language EN/SV wording, friendly error messages and address search for the group app. This page is our docs and test page, not a map: the group map is /colony/mareri.',
+    'docs.modules': 'Modules',
+    'docs.mod.strings': 'strings.js: t(lang, key, vars) with identical English and Swedish tables, transport mode names and the 5-minute band legend.',
+    'docs.mod.errors': 'errors.js: errorMessage(lang, err) turns marlin errors, network failures, timeouts and geolocation errors into one clear sentence plus a fix.',
+    'docs.mod.search': 'search.js: address search (OpenStreetMap Nominatim, Stockholm area, max 1 request per second, debounced) and locate() for the device position.',
+    'docs.mod.adapter': 'mareri-adapter.js: one classic script for the integrator. Merges our wording into window.I18N, keeps aria-labels in the current language and exposes window.TomforMareri.errorText(lang, err).',
+    'docs.load': 'Loading tomfor in the group app',
+    'docs.loadAdapter': 'Option 1, one script tag (between i18n.js and app.js):',
+    'docs.loadEsm': 'Option 2, ES module imports:',
+    'docs.contract': 'Full contract: projects/tomfor/CONTRACT.md and MARERI-INTEGRATION.md in the repo.',
+    'docs.demo': 'Live demo',
+    'docs.acceptance': 'Acceptance test of the group app',
+    'docs.acceptance.summary': 'Real Chromium against /colony/mareri, phone 390 px touch and desktop 1280x800, 22 Oct 10:57. No FAIL: every functional requirement works; PARTIAL only on error visibility, the desktop legend and touch target sizes.',
+    'docs.acceptance.where': 'Full table, evidence and screenshots: projects/tomfor/tests/results-acceptance.md in the repo.',
+    'docs.col.req': 'Requirement',
+    'docs.col.phone': 'Phone',
+    'docs.col.desktop': 'Desktop',
   },
   sv: {
     'app.title': 'Restidskarta för Stockholm',
@@ -144,6 +161,23 @@ export const strings = {
     'error.unreachable.fix': 'Kontrollera anslutningen och försök igen.',
     'error.unknown': 'Ett oväntat fel inträffade.',
     'error.unknown.fix': 'Ladda om sidan och försök igen.',
+    'docs.intro': 'Team tomfor gör begriplig text på engelska och svenska, tydliga felmeddelanden och adressökning till gruppens app. Den här sidan är vår dokumentation och testsida, inte en karta: gruppens karta är /colony/mareri.',
+    'docs.modules': 'Moduler',
+    'docs.mod.strings': 'strings.js: t(lang, key, vars) med identiska engelska och svenska tabeller, namn på trafikslag och teckenförklaringen i 5-minutersband.',
+    'docs.mod.errors': 'errors.js: errorMessage(lang, err) gör om fel från marlin, nätverksfel, tidsgränser och platsfel till en tydlig mening och ett förslag på vad man kan göra.',
+    'docs.mod.search': 'search.js: adressökning (OpenStreetMap Nominatim, Stockholmsområdet, högst 1 anrop per sekund, med fördröjning) och locate() för enhetens position.',
+    'docs.mod.adapter': 'mareri-adapter.js: ett vanligt skript för integratören. Lägger in vår text i window.I18N, håller aria-etiketter på rätt språk och ger window.TomforMareri.errorText(lang, err).',
+    'docs.load': 'Så laddar gruppens app tomfor',
+    'docs.loadAdapter': 'Alternativ 1, en script-tagg (mellan i18n.js och app.js):',
+    'docs.loadEsm': 'Alternativ 2, ES-moduler:',
+    'docs.contract': 'Hela kontraktet: projects/tomfor/CONTRACT.md och MARERI-INTEGRATION.md i repot.',
+    'docs.demo': 'Prova live',
+    'docs.acceptance': 'Acceptanstest av gruppens app',
+    'docs.acceptance.summary': 'Riktig Chromium mot /colony/mareri, mobil 390 px med touch och dator 1280x800, 22 okt 10:57. Inget FAIL: alla funktionskrav fungerar; PARTIAL bara för synliga felmeddelanden, teckenförklaringen på dator och storlek på tryckytor.',
+    'docs.acceptance.where': 'Hela tabellen, bevis och skärmbilder: projects/tomfor/tests/results-acceptance.md i repot.',
+    'docs.col.req': 'Krav',
+    'docs.col.phone': 'Mobil',
+    'docs.col.desktop': 'Dator',
   },
 };
 
@@ -154,10 +188,23 @@ export function normalizeLang(lang) {
   return strings[l] ? l : DEFAULT_LANG;
 }
 
-export function detectLang() {
+// Strict match: 'sv', 'SV', 'sv-SE' -> 'sv'; unknown -> null (so detectLang can try the next source).
+function matchLang(x) {
+  const l = String(x || '').toLowerCase().slice(0, 2);
+  return strings[l] ? l : null;
+}
+
+// Order: URL ?lang= (shareable links), saved choice (localStorage 'lang'), navigator.language, then en.
+// `search` overrides location.search (handy in tests/node). Safe without window/location/localStorage.
+export function detectLang(search) {
   try {
-    const saved = localStorage.getItem('lang');
-    if (saved) return normalizeLang(saved);
+    const q = search ?? (typeof location !== 'undefined' ? location.search : '');
+    const fromUrl = matchLang(new URLSearchParams(q || '').get('lang'));
+    if (fromUrl) return fromUrl;
+  } catch {}
+  try {
+    const saved = matchLang(localStorage.getItem('lang'));
+    if (saved) return saved;
   } catch {}
   return normalizeLang(typeof navigator !== 'undefined' ? navigator.language : DEFAULT_LANG);
 }

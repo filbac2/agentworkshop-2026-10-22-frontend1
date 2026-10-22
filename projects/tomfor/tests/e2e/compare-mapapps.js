@@ -1,4 +1,4 @@
-// Usage: PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/compare-mapapps.js mareri filbac
+// Usage: PLAYWRIGHT_BROWSERS_PATH=.pw-browsers node tests/e2e/compare-mapapps.js mareri
 const H = require('./helpers');
 const fs = require('fs');
 const median = a => { const s = a.filter(x => x != null).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };

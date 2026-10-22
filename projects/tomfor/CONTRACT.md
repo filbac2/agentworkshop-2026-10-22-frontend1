@@ -1,13 +1,47 @@
 # tomfor: i18n, errors and place search
 
-Owner: team tomfor. Plain ES modules, no dependencies, no backend. Served at `/colony/tomfor/`.
-Demo: `/colony/tomfor/index.html`. Only tomfor changes this file; changes are announced in `#build` first.
+Owner: team tomfor. Plain ES modules, no dependencies, no backend. Served as static files under `/colony/tomfor/`.
+Only tomfor changes this file; changes are announced in `#build` first.
+
+tomfor has no tile page: per filbac's `#build` post 290 the group shows one tile in the colony, so our
+`index.html` (docs + test page) was removed. The modules below stay at the same URLs, and this file is the docs.
+
+## Modules
+
+| file | what |
+|---|---|
+| `/colony/tomfor/strings.js` | EN/SV strings, `t()`, band legend, language detection |
+| `/colony/tomfor/errors.js` | clear EN/SV error messages (what happened + what to do), `fetchJson` |
+| `/colony/tomfor/search.js` | debounced address search (Nominatim, Stockholm area) and "my location" |
+| `/colony/tomfor/mareri-adapter.js` | classic script for the group app: wording, aria-labels, `window.TomforMareri.errorText` |
+
+Classic script load (between the app's `i18n.js` and `app.js`):
+
+```html
+<script src="i18n.js"></script>
+<script src="/colony/tomfor/mareri-adapter.js"></script>
+<script src="app.js"></script>
+<!-- then, for a marlin error: const msg = window.TomforMareri.errorText(lang, err); -->
+```
+
+ES module load:
 
 ```js
 import { t, bandLegend, detectLang, MODES } from '/colony/tomfor/strings.js';
 import { errorMessage, fetchJson } from '/colony/tomfor/errors.js';
 import { searchAddress, createSearcher, locate } from '/colony/tomfor/search.js';
 ```
+
+## Loading tomfor in the group app
+
+tomfor is not the integrator (we vote mareri) and has no tile of its own. The integrator loads us in one of two ways,
+no build step and no backend:
+
+1. One classic script tag, between its `i18n.js` and `app.js`: `<script src="/colony/tomfor/mareri-adapter.js"></script>`.
+   It merges our EN/SV wording into `window.I18N`, localizes aria-labels and exposes `window.TomforMareri.errorText(lang, err)`.
+2. ES modules: the three import lines at the top of this file (`strings.js`, `errors.js`, `search.js`).
+
+All files are same-origin static files under `/colony/tomfor/`. `docs.*` keys in `strings.js` were used by our removed tile; they stay for compatibility.
 
 ## strings.js
 
@@ -17,7 +51,7 @@ import { searchAddress, createSearcher, locate } from '/colony/tomfor/search.js'
   `result.*`, `warning.fixture`, `search.*`, `error.*`.
 - `MODES`: `bus, metro, tram, train, commuter_rail, boat` (vijay-team names; label key `mode.<name>`).
 - `bandLegend(lang, maxTravelMinutes = 30, bandMinutes = 5)` gives `[{from, to, color, label}]`, nearest band first. `BAND_COLORS` is the palette.
-- `detectLang()` reads localStorage `lang`, then `navigator.language`. `normalizeLang(x)`, `LANGS`.
+- `detectLang(search?)` reads the URL param `?lang=` (`en`/`sv`, also `sv-SE`; unknown values are skipped), then localStorage `lang`, then `navigator.language`, then `en`. Works in node too. `normalizeLang(x)`, `LANGS`.
 
 ## errors.js
 
@@ -60,3 +94,29 @@ Browser only for search: Nominatim answers 403 to Node's default fetch User-Agen
 `User-Agent` header (verified live 10:25: works, 5 hits for "Kungsgatan 1").
 
 Example (mareri): `const [p] = await searchAddress('Drottninggatan 1'); map.setView([p.lat, p.lon], 15); setPin(p.lat, p.lon);`
+
+## Acceptance summary (moved from the removed tile)
+
+Our run of the PROJEKT.md requirements against the group app (phone 390px touch / desktop 1280x800). Details:
+[tests/results-acceptance.md](tests/results-acceptance.md), raw run `tests/e2e/acceptance-run.json`.
+
+| # | requirement | phone | desktop |
+|---|---|---|---|
+| R1 | OSM map, Stockholm, pan + zoom | PASS | PASS |
+| R2 | Set and move the pin | PASS | PASS |
+| R3 | Start time defaults to now | PASS | PASS |
+| R4 | Max travel 5-120, step 5, default 30 | PASS | PASS |
+| R5 | Max wait default 7 | PASS | PASS |
+| R6 | Walking: to destination + between stations | PASS | PASS |
+| R7 | Transport type filters | PASS | PASS |
+| R8 | Max transfers default 3 | PASS | PASS |
+| R9 | Update recalculates | PASS | PASS |
+| R10 | 5-min colour bands + legend | PASS | PARTIAL |
+| R11 | Rendered within a couple of seconds | PASS | PASS |
+| R12 | Trafiklab cached / preprocessed | PASS | PASS |
+| R13 | Responsive, touch-friendly | PARTIAL | PARTIAL |
+| R15 | English and Swedish | PASS | PASS |
+| R16a | Clear error: API failure | PARTIAL | PARTIAL |
+| R16b | Clear error: no routes | PARTIAL | PARTIAL |
+| R16c | Clear error: options too restrictive | PARTIAL | PARTIAL |
+| R17 | Console / network health | PASS | PASS |

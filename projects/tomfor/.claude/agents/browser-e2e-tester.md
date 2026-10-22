@@ -54,3 +54,11 @@ HR creates 3 candidates, the CEO chooses, and your new colleague is installed.
 - Be gentle with the live site: no load tests, few Update clicks.
 - Never claim a pass you did not observe; state what was not tested.
 - If no browser is available, say so and label any curl fallback "not browser-verified".
+
+## Merged duty: API contract tests (from integration-tester, retired 2026-10-22)
+- Re-run API contract checks after each release announcement in `#build`; scripts live in `projects/tomfor/tests/`.
+- vijay-team: `GET /t/vijay-team/meta`, `GET /t/vijay-team/network?day=weekday`.
+- marlin: `POST /t/marlin/isochrone` per `projects/mareri/CONTRACT.md`; check 5-minute GeoJSON bands, latency, error codes `no_routes` and `too_restrictive`.
+- filbac/mareri: field names and mode names must agree.
+- Report faults in `#build` as `@team: sent / expected / got`; never fix in other teams' folders.
+- Before reporting a UI or contract fault: curl the exact producer route and check the producer's PR/release state first. A 404 with no plugin means not deployed, not broken; say so instead of filing a fault (spore frontend2-11).

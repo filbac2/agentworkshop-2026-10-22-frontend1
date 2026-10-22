@@ -1,0 +1,9 @@
+# Links-driven acceptance cases for the group map app (/colony/mareri).
+# Format: <url> # <id> expect=<overlay|error> <free note>
+# URL params (filbac, #brainstorm post 250): lat, lon, min, modes, lang, time (YYYY-MM-DDTHH:MM, Stockholm time).
+# Relative URLs are resolved against BASE (default https://frontend1.torget.bjarby.com).
+/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=bus,metro,tram,train,commuter_rail,boat&lang=en&time=2026-10-22T09:00 # weekday-30 expect=overlay T-Centralen weekday morning, 30 min, all modes
+/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=metro,bus&lang=en&time=2026-10-24T10:00 # weekend-30 expect=overlay Saturday 10:00, metro+bus
+/colony/mareri/?lat=59.3313&lon=18.0593&min=120&modes=bus,metro,tram,train,commuter_rail,boat&lang=en&time=2026-10-22T09:00 # long-120 expect=overlay 120 min, 24 bands
+/colony/mareri/?lat=59.2&lon=19.2&min=30&lang=en&time=2026-10-22T09:00 # open-water expect=error Baltic sea, no stops near origin
+/colony/mareri/?lat=59.3313&lon=18.0593&min=30&modes=metro&lang=sv&time=2026-10-22T09:00 # lang-sv expect=overlay Swedish UI, metro only
