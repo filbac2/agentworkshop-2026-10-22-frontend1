@@ -1,68 +1,96 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>marlin — isochrone engine</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>marlin: isochrone engine (docs + test page)</title>
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 0; padding: 1rem; max-width: 40rem; }
+  h1 { font-size: 1.3rem; } h2 { font-size: 1rem; margin-top: 1.5rem; }
+  button, input, select { font: inherit; min-height: 44px; padding: 0 .75rem; }
+  input { width: 100%; box-sizing: border-box; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; margin: .5rem 0; }
+  pre { background: #f4f4f4; padding: .6rem; overflow-x: auto; font-size: .85rem; border-radius: 4px; }
+  code { font-size: .9em; }
+  .ok { color: #1a7f37; font-weight: 600; }
+  .bad { color: #d73027; font-weight: 600; }
+  .muted { color: #555; font-size: .9rem; }
+</style>
 </head>
 <body>
+<h1>marlin — isochrone engine <span class="muted">(docs + test page, not a second map)</span></h1>
+<p class="muted">
+  The actual map is <a href="/colony/mareri">/colony/mareri</a> (the group's single
+  canonical product tile, see <code>#build</code>). This page exists so the engine can
+  be inspected and poked directly: health, contract, and a raw request/response test.
+</p>
 
-<div id="map" aria-label="Map of Stockholm"></div>
+<h2>Health</h2>
+<p id="health">loading…</p>
 
-<header class="bar">
-  <h1>marlin <span>isochrone engine</span></h1>
-  <p id="status" role="status">Loading…</p>
-</header>
+<h2>Contract</h2>
+<ul>
+  <li>Backend: <code>POST /t/marlin/isochrone</code>, <code>GET /t/marlin/health</code>,
+    <code>GET /t/marlin/modes</code></li>
+  <li>Full contract and examples: <a href="https://github.com/fltman/agentworkshop-2026-10-22-frontend1/blob/main/projects/marlin/CONTRACT.md">CONTRACT.md</a></li>
+  <li>Also reachable via the shared gateway: <code>/t/filbac/api/isochrone</code></li>
+</ul>
 
-<form id="panel" class="panel">
-  <button type="button" id="toggle" class="toggle" aria-expanded="true">Settings</button>
-
-  <div class="fields">
-    <label>Start time
-      <input type="time" id="startTime" required>
-    </label>
-
-    <label>Max travel time <output id="travelOut">30 min</output>
-      <input type="range" id="maxTravel" min="5" max="120" step="5" value="30">
-    </label>
-
-    <label>Max wait at transfer <output id="waitOut">7 min</output>
-      <input type="range" id="maxWait" min="0" max="30" step="1" value="7">
-    </label>
-
-    <label>Max connections <output id="transferOut">3</output>
-      <input type="range" id="maxTransfers" min="0" max="8" step="1" value="3">
-    </label>
-
-    <label>Walk to first stop <output id="accessOut">10 min</output>
-      <input type="range" id="accessMinutes" min="0" max="30" step="1" value="10">
-    </label>
-
-    <label>Walk from last stop <output id="egressOut">10 min</output>
-      <input type="range" id="egressMinutes" min="0" max="30" step="1" value="10">
-    </label>
-
-    <label>Walk at transfers <output id="transferWalkOut">5 min</output>
-      <input type="range" id="transferMinutes" min="0" max="30" step="1" value="5">
-    </label>
-
-    <fieldset id="modes">
-      <legend>Transport types</legend>
-    </fieldset>
-  </div>
-
-  <button type="submit" id="update" class="update">Update</button>
-
-  <p class="note">Band edges are approximate: the area is built from walking circles
-  around every stop reached in time, decimated so a two-hour answer stays small enough
-  to send to a phone.</p>
+<h2>Try it</h2>
+<form id="form" class="row">
+  <label style="flex:1 1 45%">Lat <input id="lat" value="59.3293" required></label>
+  <label style="flex:1 1 45%">Lon <input id="lon" value="18.0686" required></label>
+  <label style="flex:1 1 45%">Max travel minutes <input id="minutes" value="30" required></label>
+  <label style="flex:1 1 45%">Modes (comma-separated, blank = all)<input id="modes"></label>
+  <button type="submit" style="flex:1 1 100%">POST /t/marlin/isochrone</button>
 </form>
+<p id="result" class="muted"></p>
+<pre id="raw" hidden></pre>
 
-<div id="legend" class="legend" hidden></div>
+<script>
+const API = '/t/marlin';
+const healthEl = document.getElementById('health');
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js"></script>
+fetch(API + '/health').then((r) => r.json()).then((h) => {
+  healthEl.innerHTML = (h.ok ? '<span class="ok">ok</span>' : '<span class="bad">down</span>') +
+    ' — ' + h.stops + ' stops, ' + h.connections + ' connections, days loaded: ' +
+    (h.days && h.days.length ? h.days.join(', ') : 'none yet');
+}).catch(() => { healthEl.innerHTML = '<span class="bad">unreachable</span>'; });
+
+document.getElementById('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const lat = Number(document.getElementById('lat').value);
+  const lon = Number(document.getElementById('lon').value);
+  const maxTravelMinutes = Number(document.getElementById('minutes').value);
+  const modesRaw = document.getElementById('modes').value.trim();
+  const body = { origin: { lat, lon }, maxTravelMinutes };
+  if (modesRaw) body.modes = modesRaw.split(',').map((s) => s.trim()).filter(Boolean);
+
+  const resultEl = document.getElementById('result');
+  const rawEl = document.getElementById('raw');
+  resultEl.textContent = 'requesting…';
+  rawEl.hidden = true;
+
+  const started = performance.now();
+  try {
+    const res = await fetch(API + '/isochrone', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const json = await res.json();
+    const ms = Math.round(performance.now() - started);
+    if (!res.ok) {
+      resultEl.innerHTML = '<span class="bad">' + res.status + '</span> ' + (json.message || json.error || 'error') + ' (' + ms + ' ms)';
+    } else {
+      resultEl.innerHTML = '<span class="ok">200</span> ' + (json.features ? json.features.length : 0) +
+        ' bands, ' + (json.meta ? json.meta.stopsReached : '?') + ' stops reached, cached=' +
+        (json.meta ? !!json.meta.cached : '?') + ' (' + ms + ' ms)';
+    }
+    rawEl.textContent = JSON.stringify(json, null, 2).slice(0, 4000);
+    rawEl.hidden = false;
+  } catch (err) {
+    resultEl.innerHTML = '<span class="bad">request failed</span>: ' + err.message;
+  }
+});
+</script>
 </body>
 </html>

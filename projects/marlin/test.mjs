@@ -403,6 +403,15 @@ test('the start time is echoed as a full ISO string with the Stockholm offset', 
     origin: ORIGIN, startTime: '2026-10-22T07:00:00Z', maxTravelMinutes: 15,
   })));
   assert.equal(utc.meta.startTime, '2026-10-22T09:00:00+02:00');
+
+  // tomfor sent seconds+ms (2026-10-22T08:54:37.123Z) and got +01:59 instead
+  // of +02:00: the offset was derived from a minute-truncated UTC instant
+  // compared against the untruncated original, losing up to 59.999 s.
+  const withSeconds = computeIsochrone(parseRequest(JSON.stringify({
+    origin: ORIGIN, startTime: '2026-10-22T08:54:37.123Z', maxTravelMinutes: 15,
+  })));
+  assert.equal(withSeconds.meta.startTime.slice(-6), '+02:00',
+    'seconds/ms in the input must not corrupt the derived Stockholm offset');
 });
 
 test('any whole minute from 5 to 120 is accepted, outside that is rejected', () => {

@@ -300,8 +300,11 @@ function applyConnections(net, raw, label) {
 }
 
 /**
- * Lazily loads one network per day type, so a deployment that only ever sees
- * weekday queries never pays for the weekend files.
+ * Loads one network per day type on demand (`get`), or all three up front
+ * (`preloadAll`) - vijay-team's health audit measured the first weekend
+ * query at ~4s because weekday was the only day warmed by then. `init()`
+ * calls `preloadAll()` off the request path (setImmediate) so a deployment
+ * still boots fast, but weekend files are usually ready before anyone asks.
  */
 function createStore(dataDir) {
   const loaded = new Map();
@@ -352,6 +355,9 @@ function createStore(dataDir) {
     },
     loadedDays() {
       return Array.from(loaded.keys());
+    },
+    preloadAll() {
+      for (const dayType of DAY_TYPES) loadDay(dayType);
     },
   };
 }

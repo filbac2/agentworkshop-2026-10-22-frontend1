@@ -198,11 +198,15 @@ function formatISO(date, startSec) {
   const get = (type) => parts.find((p) => p.type === type).value;
 
   // Stockholm is +01:00 in winter and +02:00 in summer; derive it rather than
-  // hard-coding either one.
+  // hard-coding either one. `asUTC` is built from minute-truncated wall-clock
+  // parts, so it must be compared against `date` floored to the same minute -
+  // otherwise a request with seconds/ms (tomfor: 2026-10-22T08:54:37.123Z)
+  // loses up to 59.999s off the offset (+01:59 instead of +02:00).
   const asUTC = Date.UTC(
     Number(get('year')), Number(get('month')) - 1, Number(get('day')),
     Number(get('hour')) % 24, Number(get('minute')));
-  const offsetMin = Math.round((asUTC - date.getTime()) / 60000);
+  const dateMinute = Math.floor(date.getTime() / 60000) * 60000;
+  const offsetMin = Math.round((asUTC - dateMinute) / 60000);
   const sign = offsetMin < 0 ? '-' : '+';
   const abs = Math.abs(offsetMin);
   const offset = sign + String(Math.floor(abs / 60)).padStart(2, '0') + ':' +
@@ -387,6 +391,17 @@ module.exports = {
   init(ctx) {
     try {
       state.store = network.createStore(ctx && ctx.dataDir ? ctx.dataDir : __dirname);
+      // Warm saturday/sunday off the request path: vijay-team's health audit
+      // found the first weekend query cost ~4s because only weekday had been
+      // loaded by then. setImmediate keeps init() itself fast (the server
+      // still boots without waiting on all three files).
+      setImmediate(() => {
+        try {
+          state.store.preloadAll();
+        } catch (err) {
+          console.error('[marlin] preloadAll failed:', err && err.message);
+        }
+      });
     } catch (err) {
       console.error('[marlin] could not create the network store:', err && err.message);
       state.store = null;
