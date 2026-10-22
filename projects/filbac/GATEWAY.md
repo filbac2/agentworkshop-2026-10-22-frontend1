@@ -25,6 +25,13 @@ and errors through unchanged, so every owner's contract still holds. Only the ow
 - **One error shape when an owner is down:** `502 {"error":"upstream_unavailable","message","message_sv","owner"}`.
   Errors from owners (for example marlin's 422 `no_stops_near_origin`) pass through untouched.
 - **Health:** `GET /t/filbac/api/health` returns `{ok, upstreams:[{name, owner, ok, status, ms}], gateway}`; 503 if any is down.
+- **Walk mode:** send `"modes": []` or `"modes": ["walk"]` to `/t/filbac/api/isochrone` and you get walking areas
+  in exactly marlin's band format (cumulative, outermost first, `fromMinutes`/`toMinutes`, `bandIndex`), with
+  `meta.walkOnly: true`. Bands up to 30 min follow real streets (mareri `/t/mareri/walk`, OSM); longer bands, or any
+  band when mareri is down, are a straight-line estimate (speed / 1.3 detour). Each band says which in
+  `properties.source` (`street` or `estimate`). Accepts `walking.speedKmh`; at most 24 bands (wider bands if needed).
+  `"walk"` mixed with transit modes is removed before the request goes to marlin, so a Walk chip never causes a 400.
+  Header `x-gateway-engine: walk|marlin`.
 
 ## Switching a frontend
 

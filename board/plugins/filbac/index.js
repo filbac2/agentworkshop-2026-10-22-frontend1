@@ -1,6 +1,7 @@
 // filbac gateway: ONE backend address for every frontend of the Stockholm isochrone map.
 // It owns no data and no algorithm. It forwards to the teams that do, over loopback:
 //   /t/filbac/api/isochrone   POST -> marlin     /t/marlin/isochrone   (cached briefly, gzipped)
+//                                   modes [] or ["walk"] -> walk-only bands via mareri /t/mareri/walk
 //   /t/filbac/api/modes       GET  -> marlin     /t/marlin/modes
 //   /t/filbac/api/walk        GET  -> mareri     /t/mareri/walk
 //   /t/filbac/api/stops       GET  -> vijay-team /t/vijay-team/stops
@@ -165,18 +166,138 @@ async function health(res) {
   sendJson(res, ok ? 200 : 503, { ok, upstreams: checks, gateway: Object.assign({ cached: cache.size }, stats) });
 }
 
+// Walk-only mode: modes [] or ["walk"] gives walking areas in marlin's band format.
+// Bands up to 30 min use mareri's street network (/t/mareri/walk); longer bands, or any band
+// when mareri is down, use a straight-line estimate, marked with properties.source.
+const WALK_STREET_MAX = 30;
+const WALK_DETOUR = 1.3;
+const WALK_MAX_BANDS = 24;
+
+function first(...vals) {
+  for (const v of vals) if (v !== undefined && v !== null && v !== '') return v;
+  return undefined;
+}
+
+function parseWalkRequest(json) {
+  const o = json.origin || json.from || json.start || {};
+  const lat = Number(first(o.lat, o.latitude));
+  const lon = Number(first(o.lon, o.lng, o.longitude));
+  const w = json.walking || json.walk || {};
+  const speed = Number(first(w.speedKmh, w.speed_kmh, 4.8));
+  const max = Number(first(json.maxTravelMinutes, json.max_travel_min, json.maxTravelMin, json.minutes, 30));
+  let band = Number(first(json.bandMinutes, json.band_min, json.bandMin, json.step, 5));
+  if (!(lat >= 58.5 && lat <= 60.5 && lon >= 17 && lon <= 19.5)) {
+    return { error: ['origin must be a point in the Stockholm region.', 'origin måste vara en punkt i Stockholmsregionen.'] };
+  }
+  if (!Number.isInteger(max) || max < 5 || max > 120) {
+    return { error: ['maxTravelMinutes must be a whole number from 5 to 120.', 'maxTravelMinutes måste vara ett heltal från 5 till 120.'] };
+  }
+  if (!Number.isInteger(band) || band < 1 || band > 30) {
+    return { error: ['bandMinutes must be a whole number from 1 to 30.', 'bandMinutes måste vara ett heltal från 1 till 30.'] };
+  }
+  if (!(speed >= 1 && speed <= 10)) {
+    return { error: ['walking.speedKmh must be between 1 and 10.', 'walking.speedKmh måste vara mellan 1 och 10.'] };
+  }
+  band = Math.max(band, Math.ceil(max / WALK_MAX_BANDS));
+  return { lat, lon, speed, max, band };
+}
+
+function estimateCircle(lat, lon, minutes, speedKmh) {
+  const km = (speedKmh * minutes) / 60 / WALK_DETOUR;
+  const dLat = km / 111.32;
+  const dLon = km / (111.32 * Math.cos((lat * Math.PI) / 180));
+  const ring = [];
+  for (let i = 0; i <= 48; i++) {
+    const a = (i / 48) * 2 * Math.PI;
+    ring.push([+(lon + dLon * Math.cos(a)).toFixed(5), +(lat + dLat * Math.sin(a)).toFixed(5)]);
+  }
+  return { type: 'MultiPolygon', coordinates: [[ring]] };
+}
+
+async function walkBand(q, minutes) {
+  if (minutes <= WALK_STREET_MAX) {
+    const search = '?lat=' + q.lat + '&lon=' + q.lon + '&minutes=' + minutes + '&speedKmh=' + q.speed;
+    const up = await upstream('GET', 'mareri', 'walk', search, null);
+    if (!up.error && up.status === 200) {
+      try {
+        const f = JSON.parse(up.body.toString('utf8'));
+        if (f && f.geometry) return { geometry: f.geometry, source: 'street' };
+      } catch (e) { /* fall through to the estimate */ }
+    }
+  }
+  return { geometry: estimateCircle(q.lat, q.lon, minutes, q.speed), source: 'estimate' };
+}
+
+async function walkOnly(q) {
+  const t0 = Date.now();
+  const edges = [];
+  for (let m = q.band; m < q.max; m += q.band) edges.push(m);
+  edges.push(q.max);
+  const parts = await Promise.all(edges.map((m) => walkBand(q, m)));
+  const features = edges.map((to, i) => ({
+    type: 'Feature',
+    properties: {
+      fromMinutes: i ? edges[i - 1] : 0, toMinutes: to,
+      from_min: i ? edges[i - 1] : 0, to_min: to,
+      bandIndex: i + 1, stops: 0, mode: 'walk', source: parts[i].source,
+    },
+    geometry: parts[i].geometry,
+  })).reverse();
+  const sources = new Set(parts.map((p) => p.source));
+  return {
+    type: 'FeatureCollection',
+    meta: {
+      origin: { lat: q.lat, lon: q.lon },
+      bandMinutes: q.band, maxTravelMinutes: q.max, walkOnly: true, modes: ['walk'],
+      speedKmh: q.speed, stopsReached: 0, computedMs: Date.now() - t0,
+      source: sources.size > 1 ? 'mixed' : [...sources][0],
+      algorithm: 'walk-only (mareri street network, straight-line estimate beyond ' + WALK_STREET_MAX + ' min)',
+      cumulativeBands: true,
+    },
+    features,
+  };
+}
+
+// Decide what an isochrone body means: walk-only, transit with "walk" stripped, or untouched.
+function classify(body) {
+  let json;
+  try { json = JSON.parse(body.toString('utf8')); } catch (e) { return { kind: 'pass' }; }
+  if (!json || typeof json !== 'object' || !Array.isArray(json.modes)) return { kind: 'pass' };
+  const transit = json.modes.filter((m) => m !== 'walk');
+  if (transit.length === 0) return { kind: 'walk', json };
+  if (transit.length !== json.modes.length) {
+    return { kind: 'pass', body: Buffer.from(JSON.stringify(Object.assign({}, json, { modes: transit }))) };
+  }
+  return { kind: 'pass' };
+}
+
 async function isochrone(req, res, url, body) {
   const key = body.toString('utf8');
   const gz = wantsGzip(req);
   let entry = cacheGet(key);
   let state = 'hit';
+  let engine = 'marlin';
   if (entry) {
     stats.cacheHits++;
+    engine = entry.engine || 'marlin';
   } else {
     state = 'miss';
-    const up = await upstream('POST', 'marlin', 'isochrone', url.search, body);
-    if (up.error) return false;
-    entry = { at: Date.now(), up, gz: null };
+    const c = classify(body);
+    if (c.kind === 'walk') {
+      engine = 'walk';
+      const q = parseWalkRequest(c.json);
+      if (q.error) {
+        gatewayError(res, 400, 'bad_request', q.error[0], q.error[1]);
+        return true;
+      }
+      const out = Buffer.from(JSON.stringify(await walkOnly(q)));
+      entry = { at: Date.now(), engine, gz: null,
+        up: { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }, body: out } };
+    } else {
+      const up = await upstream('POST', 'marlin', 'isochrone', url.search, c.body || body);
+      if (up.error) return false;
+      entry = { at: Date.now(), engine, up, gz: null };
+    }
     cachePut(key, entry);
   }
   let gzBody = null;
@@ -184,7 +305,7 @@ async function isochrone(req, res, url, body) {
     if (!entry.gz) entry.gz = await gzip(entry.up.body);
     gzBody = entry.gz;
   }
-  relay(res, entry.up, { 'x-gateway-cache': state }, gzBody);
+  relay(res, entry.up, { 'x-gateway-cache': state, 'x-gateway-engine': engine }, gzBody);
   return true;
 }
 
