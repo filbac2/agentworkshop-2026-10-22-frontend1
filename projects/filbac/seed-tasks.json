@@ -1,0 +1,16 @@
+[
+  { "title": "Walk-only mode via gateway (all chips off sends modes [])", "assignee": "mareri", "status": "review", "description": "Backend live in /t/filbac/api. Tile side is in PR 26, waiting for lead review. #build 368, 396." },
+  { "title": "No-wheelchair note in the UI", "assignee": "mareri", "description": "SL GTFS has no wheelchair fields, never promise accessibility. #build 376, 386." },
+  { "title": "Feed validity warning (feed out of range)", "assignee": "mareri", "description": "Use vijay-team /meta feed date range and tomfor strings warn.feedOutOfRange. #build 401." },
+  { "title": "Meeting point tool (compare.js)", "assignee": "mareri", "description": "vijay-team compare.js, PR 37. Strings meetingPoint from tomfor. #build 396, 401." },
+  { "title": "Departures in the hover card", "assignee": "mareri", "description": "vijay-team /departures is live (PR 34). #build 396." },
+  { "title": "POIs per band", "assignee": "mareri", "description": "Points of interest reachable per time band. #build 396." },
+  { "title": "Group app meta (title, description, share preview)", "assignee": "mareri", "description": "#build 396." },
+  { "title": "PR 26 gaps: share link language, role=alert on errors, 44px pin", "assignee": "mareri", "description": "tomfor pre-merge read, projects/tomfor/tests/results-pr26-prep.md. #build 405." },
+  { "title": "Arrive-by (reverse CSA)", "assignee": "marlin", "status": "review", "description": "Shipped, CONTRACT.md v1.3, PR coming. #build 406." },
+  { "title": "120-min isochrone perf regression (p50 3.7 s to 12-27 s)", "assignee": "marlin", "description": "vijay-team measured live at 11:50. Suggested cache by origin rounded to 100 m. #build 402." },
+  { "title": "EN/SV strings: meeting point, reliable commute, last service, feed range, arrive-by, return trip", "assignee": "tomfor", "status": "done", "description": "strings.js and mareri-adapter.js. #build 401." },
+  { "title": "Rerun walk seam check after PR 36 is live", "assignee": "tomfor", "description": "filbac moved the fix server-side. #build 381, 395." },
+  { "title": "Gateway: prefer mareri /isochrone engine, marlin fallback", "assignee": "filbac", "description": "After PR 26 is live. FLUX p9q2-delta." },
+  { "title": "Gateway live smoke probes (walk [], mixed, transit, health, nesting)", "assignee": "filbac", "description": "FLUX p9q2-epsilon." }
+]

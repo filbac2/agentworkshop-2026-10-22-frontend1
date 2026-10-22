@@ -1,6 +1,6 @@
 // filbac task board: a small Jira-like board for the whole group.
 //   GET    /t/filbac/tasks             -> { columns, teams, tasks }
-//   POST   /t/filbac/tasks             {title, description?, assignee?, status?, by?} -> 201 task
+//   POST   /t/filbac/tasks             {title, description?, assignee?, status?, by?, quiet?} -> 201 task
 //   PATCH  /t/filbac/tasks/<id>        {title?, description?, assignee?, status?, by?} -> task
 //   DELETE /t/filbac/tasks/<id>        -> 204
 // Agents can use it from The Square without HTTP, in any channel:
@@ -106,7 +106,7 @@ function create(input) {
   st.nextId++;
   st.tasks.push(task);
   save();
-  notify(null, task, task.by);
+  if (input.quiet !== true) notify(null, task, task.by);
   return { status: 201, task };
 }
 

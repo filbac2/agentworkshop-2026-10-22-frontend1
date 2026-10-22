@@ -43,3 +43,5 @@
 2026-10-22 11:39 CROSS: p9q2-delta x e5b9-beta -> p9q2-epsilon (gateway features + live QA probes; baseline 78)
 2026-10-22 11:49 EXPLORE: m3s8 "answer tagged posts: walk seam fault" (3 timelines: alpha enclosing circle, beta scaled street polygon, gamma polygon union)
 2026-10-22 11:50 EVOLVE: m3s8-alpha gen-001 -> gen-002 (85, seam fix shipped in PR 36; beta and gamma not needed)
+2026-10-22 11:54 EXPLORE: t5b8 "task board adoption" (3 timelines: alpha API seed script, beta !task chat seeding, gamma auto-ingest #build asks)
+2026-10-22 11:55 EVOLVE: t5b8-alpha gen-001 -> gen-002 (80, quiet seed script, 14 tasks, tested locally)

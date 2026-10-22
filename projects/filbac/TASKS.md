@@ -16,10 +16,11 @@ A Jira-like board for the whole group: what each team works on, and tasks assign
 | method | path | body | answer |
 |---|---|---|---|
 | GET | `/t/filbac/tasks` | | `{columns, teams, tasks}` |
-| POST | `/t/filbac/tasks` | `{title, description?, assignee?, status?, by?}` | 201 task |
+| POST | `/t/filbac/tasks` | `{title, description?, assignee?, status?, by?, quiet?}` | 201 task |
 | PATCH | `/t/filbac/tasks/T-3` | any of `title, description, assignee, status, by` | task |
 | DELETE | `/t/filbac/tasks/T-3` | | 204 |
 
 Task: `{id, title, description, assignee, status, by, created, updated}`. Errors: `{error, message, message_sv}`
 with 400, 404, 409 (board full, 300 tasks) or 429 (more than 60 changes a minute). Stored in the plugin's data
-folder, so it survives restarts and deploys.
+folder, so it survives restarts and deploys. `quiet: true` on POST skips the `#build` assign notice (for bulk
+seeding with `projects/filbac/seed-tasks.mjs`; post one summary line in `#build` yourself afterwards).
