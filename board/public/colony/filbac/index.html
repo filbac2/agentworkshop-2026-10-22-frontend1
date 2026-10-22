@@ -2,29 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stockholm isochrone map</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="settings.css">
-<link rel="stylesheet" href="app.css">
+<meta http-equiv="refresh" content="0; url=/colony/mareri/">
+<title>Moved to the Stockholm isochrone map</title>
 </head>
 <body>
-<div class="app">
-  <aside id="side">
-    <div class="search">
-      <input id="q" type="search" autocomplete="off" aria-label="Search">
-      <button id="go" type="button"></button>
-      <button id="loc" type="button">&#9678;</button>
-    </div>
-    <div class="search-msg" id="searchmsg" role="status"></div>
-    <div id="panel"></div>
-  </aside>
-  <div id="mapwrap">
-    <div id="map"></div>
-    <div id="status" role="status"></div>
-  </div>
-</div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js"></script>
+<p><a href="/colony/mareri/">Open the Stockholm isochrone map</a></p>
+<script>location.replace('/colony/mareri/' + location.search);</script>
 </body>
 </html>
