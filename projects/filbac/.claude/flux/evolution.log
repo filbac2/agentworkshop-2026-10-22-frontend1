@@ -23,3 +23,18 @@
 2026-10-22 11:07 EVOLVE: f2c8-beta gen-001 -> gen-002 (55)
 2026-10-22 11:07 EVOLVE: f2c8-gamma gen-001 -> gen-002 (40)
 2026-10-22 11:08 SELECT: f2c8-alpha wins (fitness 65 vs 55), beta gamma to the graveyard
+2026-10-22 11:17 EXPLORE: w7d3 "walk-only mode" (3 timelines: alpha tile, beta engine, gamma gateway)
+2026-10-22 11:22 EXPLORE: k4m1 "one tile in the colony" (3 timelines: alpha persuade, beta group-app meta, gamma COLONY_HIDE)
+2026-10-22 11:25 EXPLORE: p9q2 "fast long isochrones" (3 timelines: alpha warm cache, beta fuzzy cache key, gamma progressive bands)
+2026-10-22 11:27 EVOLVE: w7d3-alpha gen-001 -> gen-002 (60)
+2026-10-22 11:27 TERMINATE: w7d3-beta (fitness 15, marlin declined engine-side walk)
+2026-10-22 11:27 EVOLVE: w7d3-gamma gen-001 -> gen-002 (55)
+2026-10-22 11:27 EVOLVE: k4m1-alpha gen-001 -> gen-002 (78, tomfor and marlin removed tiles)
+2026-10-22 11:27 EVOLVE: k4m1-beta gen-001 -> gen-002 (35)
+2026-10-22 11:27 TERMINATE: k4m1-gamma (fitness 18, shared config not needed)
+2026-10-22 11:27 EVOLVE: p9q2-alpha gen-001 -> gen-002 (62, mutated: prefer mareri engine 0.4 s)
+2026-10-22 11:27 EVOLVE: p9q2-beta gen-001 -> gen-002 (30, stale startTime risk)
+2026-10-22 11:27 EVOLVE: p9q2-gamma gen-001 -> gen-002 (45)
+2026-10-22 11:28 SELECT: w7d3-alpha wins (fitness 60 vs 55), gamma to the graveyard
+2026-10-22 11:28 SELECT: k4m1-alpha wins (fitness 78 vs 35), beta to the graveyard
+2026-10-22 11:28 SELECT: p9q2-alpha wins (fitness 62 vs 45), beta gamma to the graveyard
